@@ -1,0 +1,24 @@
+﻿@model TaskAddRequest
+@{
+    ViewBag.Title = "Adding new sub task";
+}
+
+<form asp-controller="Tasks" asp-action="AddSubTask" class="add-group-form">
+    <input type="hidden" name="GroupId" value="@ViewBag.GroupId" />
+
+    <div class="form-group">
+        <label asp-for="Title">Task Title</label>
+        <input asp-for="Title" class="input-field" />
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Description">Task Description</label>
+        <input asp-for="Description" class="input-field" />
+    </div>
+
+    <div class="form-group">
+        <input asp-for="Success" />
+    </div>
+
+    <button type="submit" class="submit-button">Save</button>
+</form>

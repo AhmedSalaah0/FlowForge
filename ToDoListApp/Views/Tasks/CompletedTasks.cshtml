@@ -1,0 +1,31 @@
+﻿@model IEnumerable<TaskResponse>
+@{
+    ViewBag.Title = "Completed Tasks";
+}
+
+<div class="container">
+    <ul class="task-list">
+        @if (Model.Count() == 0)
+        {
+            <li>There are no tasks</li>
+        }
+        else
+        {
+            @foreach (TaskResponse task in Model)
+            {
+                <li class="task-item">
+                    <label class="task-label">
+                        <a class="task-content" asp-controller="Home"
+                           asp-action="SubTasks"
+                           asp-route-groupId="@task.GroupId">
+                            <span class="task-title">@task.Title</span>
+                            <span class="task-description">@task.Description</span>
+                        </a>
+                    </label>
+                    <button class="delete-btn"><a asp-controller="Tasks" asp-action="DeleteTask" asp-route-groupId="@task.GroupId" asp-route-taskId="@task.TaskId">x</a></button>
+                </li>
+            }
+        }
+    </ul>
+    @* <button class="create-btn"><a asp-controller="Tasks" asp-action="AddSubTask" asp-route-groupId="@ViewBag.groupId">+</a></button> *@
+</div>

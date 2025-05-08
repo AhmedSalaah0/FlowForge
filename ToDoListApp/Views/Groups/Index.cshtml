@@ -1,0 +1,38 @@
+﻿@model IEnumerable<TasksGroup>
+@{
+    ViewBag.Title = "Home";
+    var grouped = Model.GroupBy(g => g.createdAt.Value.Date);
+}
+<div class="container">
+    <div class="page-content">
+        @foreach (var dateGroup in grouped)
+        {
+            <div class="date-column">
+                <h3>@dateGroup.Key.ToString("dd MMM yyyy")</h3>
+                @foreach (var group in dateGroup)
+                {
+                    <div class="card" style="background-color: @group.selectedColor">
+                        <a asp-controller="Tasks"
+                           asp-action="SubTasks"
+                           asp-route-groupId="@group.GroupId"
+                           class="Title">
+                            @group.groupTitle
+                        </a>
+                        <button class="delete-btn">
+                            <a asp-controller="Groups" asp-action="DeleteGroup" asp-route-groupId="@group.GroupId">x</a>
+                        </button>
+                        <button class="edit-btn">
+                            <a asp-controller="Groups" asp-action="EditGroup" asp-route-groupId="@group.GroupId">
+                                <i class="fas fa-edit fa-2xs"></i>
+                            </a>
+                        </button>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+    <button class="create-btn">
+        <a asp-controller="Groups" asp-action="addGroup">+</a>
+    </button>
+</div>
+    </div>

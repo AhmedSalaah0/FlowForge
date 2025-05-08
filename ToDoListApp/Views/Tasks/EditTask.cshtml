@@ -1,0 +1,26 @@
+@model TaskResponse
+@{
+    ViewBag.Title = "EditTask";
+}
+
+<form asp-controller="Tasks" asp-action="EditTask" class="add-group-form">
+    <input asp-for="GroupId" type="hidden"  />
+    <input asp-for="TaskId" type="hidden"  />
+
+
+    <div class="form-group">
+        <label asp-for="Title">Task Title</label>
+        <input asp-for="Title" class="input-field" />
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Description">Task Description</label>
+        <input asp-for="Description" class="input-field" />
+    </div>
+
+    <div class="form-group">
+        <input asp-for="Success" />
+    </div>
+
+    <button type="submit" class="submit-button">Save</button>
+</form>
