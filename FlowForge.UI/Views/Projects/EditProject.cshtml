@@ -1,0 +1,76 @@
+@using FlowForge.Core.DTO
+@model ProjectResponse
+@{
+    ViewBag.Title = "Editing Project";
+}
+
+<div class="container mt-5">
+    <div class="card bg-dark text-light shadow-sm border border-secondary mx-auto" style="max-width: 500px; width: 100%;">
+        <div class="card-body">
+            <h2 class="card-title mb-4 text-primary">
+                <i class="fas fa-edit me-2"></i> Edit Project
+            </h2>
+
+            <form asp-controller="Home" asp-action="EditGroup">
+                <div class="mb-3">
+                    <label asp-for="ProjectTitle" class="form-label text-light">Project Title</label>
+                    <input asp-for="ProjectTitle" class="form-control bg-dark text-light border-secondary" />
+                    <span asp-validation-for="ProjectTitle" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-light">Choose a Color</label>
+                    <div class="d-flex flex-wrap gap-3">
+                        @for (int i = 0; i < ViewBag.ColorOptions.Count; i++)
+                        {
+                            var color = ViewBag.ColorOptions[i] as string;
+                            <label class="color-option position-relative"
+                                   style="cursor: pointer;"
+                                   title="@color">
+                                <input asp-for="SelectedColor" type="radio" value="@color" class="d-none" />
+                                <div class="circle rounded-circle border border-secondary"
+                                     style="width: 32px; height: 32px; background-color: @color;"></div>
+                            </label>
+                        }
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-outline-light w-100">
+                    <i class="fas fa-save me-1"></i> Save
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const colorOptions = document.querySelectorAll('.color-option');
+
+            colorOptions.forEach(option => {
+                const input = option.querySelector('input[type="radio"]');
+                const circle = option.querySelector('.circle');
+
+                input.addEventListener('change', function () {
+                    document.querySelectorAll('.color-option .circle').forEach(c => {
+                        c.classList.remove('selected-border');
+                    });
+
+                    if (input.checked) {
+                        circle.classList.add('selected-border');
+                    }
+                });
+                if (input.checked) {
+                    circle.classList.add('selected-border');
+                }
+            });
+        });
+    </script>
+
+    <style>
+        .selected-border {
+            border: 3px solid #eee !important;
+        }
+    </style>
+}

@@ -1,0 +1,214 @@
+@using FlowForge.Core.DTO
+@model IEnumerable<TaskResponse>
+@{
+    ViewBag.Title = "Tasks";
+    var scheduledTasks = Model.Where(t => t.ScheduleDateTime != null).OrderBy(t => t.ScheduleDateTime);
+    var unscheduledTasks = Model.Where(t => t.ScheduleDateTime == null);
+}
+
+<div class="container mt-4">
+    <div class="mb-4 border-bottom border-secondary pb-2">
+        <h1 class="h3 text-light d-flex align-items-center gap-2">
+            <i class="fas fa-tasks"></i> Tasks
+        </h1>
+        <p class="text-light">Manage your tasks for this project</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(TempData["SuccessMessage"]?.ToString()))
+    {
+        <div class="alert alert-success d-flex align-items-center gap-2">
+            <i class="fas fa-check-circle"></i>
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="text-center border border-secondary rounded bg-dark py-5">
+            <i class="fas fa-clipboard-check fa-3x text-secondary mb-3"></i>
+            <h4 class="text-light">No Tasks Yet</h4>
+            <p class="text-muted">Add your first task to get started</p>
+            <a asp-controller="Tasks" asp-action="Task" asp-route-projectId="@ViewBag.projectId" class="btn btn-outline-light mt-2">
+                <i class="fas fa-plus"></i> Add Task
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="d-flex flex-wrap gap-3">
+                    @foreach (var task in unscheduledTasks)
+                    {
+                        <div class="card bg-secondary text-white shadow-sm p-3 fade-in" style="min-width: 250px; width: fit-content;">
+                            <div class="d-flex align-items-start gap-3">
+                                <input type="checkbox"
+                                       class="form-check-input mt-1"
+                                       id="task-@task.TaskId"
+                                       @(task.Success ? "checked" : "")
+                                       onclick="CheckOrUnCheck('@task.TaskId', '@task.ProjectId')" />
+
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold @(task.Success ? "text-decoration-line-through text-muted" : "")">
+                                        @task.Title
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(task.Description))
+                                    {
+                                        <div class="text-light small opacity-75">@task.Description</div>
+                                    }
+                                </div>
+
+                                <div class="d-flex gap-1">
+                                    <a asp-controller="Tasks" asp-action="ScheduleTask"
+                                       asp-route-projectId="@task.ProjectId" asp-route-taskId="@task.TaskId"
+                                       class="btn btn-outline-light btn-sm" title="Schedule Task">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </a>
+                                    <a asp-controller="Tasks" asp-action="EditTask"
+                                       asp-route-projectId="@task.ProjectId" asp-route-taskId="@task.TaskId"
+                                       class="btn btn-outline-info btn-sm" title="Edit Task">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a asp-controller="Tasks" asp-action="DeleteTask"
+                                       asp-route-projectId="@task.ProjectId" asp-route-taskId="@task.TaskId"
+                                       class="btn btn-outline-danger btn-sm" title="Delete Task">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="col-lg-4 mt-4 mt-lg-0">
+                <div class="card bg-dark text-white border-secondary">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="fas fa-calendar-alt me-1"></i> Scheduled Tasks</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (scheduledTasks.Any())
+                        {
+                            <ul class="list-group list-group-flush">
+                                @foreach (var task in scheduledTasks)
+                                {
+                                    var isToday = task.ScheduleDateTime?.Date == DateTime.Today;
+
+                                    <li class="list-group-item bg-dark text-white border-secondary d-flex flex-column">
+                                        <span class="fw-semibold">
+                                            <i class="fas fa-tasks me-1"></i> @task.Title
+                                            @if (isToday)
+                                            {
+                                                <span class="badge bg-danger ms-2">Today</span>
+                                            }
+                                        </span>
+
+                                        <small class="text-warning">
+                                            @task.ScheduleDateTime?.ToString("dd MMM yyyy hh:mm tt")
+                                        </small>
+
+                                        @if (task.IsRecurring)
+                                        {
+                                            <span class="badge bg-secondary mt-1 w-fit-content">
+                                                Repeats every @task.RecurringInterval day(s)
+                                            </span>
+                                        }
+
+                                        <div class="mt-2 text-end">
+                                            <a asp-action="EditTask" asp-controller="Tasks"
+                                               asp-route-taskId="@task.TaskId" asp-route-projectId="@task.ProjectId"
+                                               class="btn btn-sm btn-outline-light">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a asp-action="UnScheduleTask" asp-controller="Tasks"
+                                               asp-route-taskId="@task.TaskId" asp-route-projectId="@task.ProjectId"
+                                               class="btn btn-sm btn-outline-light" title="UnSchedule Task">
+                                                <i class="fas fa-calendar-xmark"></i>
+                                            </a>
+                                            <a asp-controller="Tasks" asp-action="ScheduleTask"
+                                               asp-route-projectId="@task.ProjectId" asp-route-taskId="@task.TaskId"
+                                               class="btn btn-outline-light btn-sm" title="Schedule Task">
+                                                <i class="fas fa-calendar-alt"></i>
+                                            </a>
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">No scheduled tasks</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a asp-controller="Tasks"
+           asp-action="Task"
+           asp-route-projectId="@ViewBag.projectId"
+           class="btn btn-primary rounded-circle d-flex justify-content-center align-items-center position-fixed shadow"
+           style="width: 60px; height: 60px; bottom: 30px; right: 30px; z-index: 1000;"
+           title="Add New Task">
+            <i class="fas fa-plus fs-4"></i>
+        </a>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const taskItems = document.querySelectorAll('.fade-in');
+            taskItems.forEach((item, index) => {
+                setTimeout(() => item.classList.add('show'), 50 * index);
+            });
+        });
+
+        function CheckOrUnCheck(taskId, projectId) {
+            const checkbox = event.target;
+            const card = checkbox.closest('.card');
+            const title = card.querySelector('.fw-bold');
+
+            const isChecked = checkbox.checked;
+            if (isChecked) {
+                title.classList.add("text-decoration-line-through", "text-muted");
+            } else {
+                title.classList.remove("text-decoration-line-through", "text-muted");
+            }
+
+            fetch(`/taskState/${taskId}`, {
+                method: 'POST'
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error("Failed to update task status");
+                    return response.json();
+                })
+                .then(data => console.log("Updated:", data))
+                .catch(err => {
+                    checkbox.checked = !isChecked;
+                    showNotification('danger', err.message);
+                });
+        }
+
+        function showNotification(type, message) {
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(n => {
+                n.classList.add('fade-out');
+                setTimeout(() => n.remove(), 300);
+            });
+
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} notification d-flex align-items-center gap-2`;
+            let icon = 'info-circle';
+            if (type === 'success') icon = 'check-circle';
+            if (type === 'danger') icon = 'exclamation-circle';
+            notification.innerHTML = `<i class="fas fa-${icon}"></i>${message}`;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.add('fade-out');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+}

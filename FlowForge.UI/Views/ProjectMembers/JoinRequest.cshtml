@@ -1,0 +1,61 @@
+﻿@using FlowForge.Core.DTO
+@model ProjectJoinRequest
+@{
+    ViewData["Title"] = "Send Joining Invitation";
+}
+
+<div class="container mt-5">
+    <div class="card bg-dark text-white shadow-sm border-0 mx-auto" style="max-width: 500px;">
+        <div class="card-body">
+            <h2 class="card-title text-light mb-4">
+                <i class="fas fa-user-plus me-2"></i> Send Joining Invitation
+            </h2>
+
+            <form asp-action="JoinRequest" asp-controller="ProjectMembers" method="post">
+                <input asp-for="ProjectId" type="hidden" />
+
+                <div class="mb-3">
+                    <label asp-for="UserEmail" class="form-label text-light">User Email</label>
+                    <input asp-for="UserEmail" class="form-control bg-secondary text-white border-0" placeholder="Enter user email" />
+                    <span asp-validation-for="UserEmail" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="MemberRole" class="form-label text-light">Role</label>
+                    <select asp-for="MemberRole" class="form-select bg-secondary text-white border-0">
+                        <option value="">Select Role</option>
+                        <option value="Member">Member</option>
+                        <option value="Moderator">Moderator</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                    <span asp-validation-for="MemberRole" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-1"></i> Back
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-1"></i> Add Member
+                    </button>
+                </div>
+                <div asp-validation-summary="ModelOnly" class="text-danger mt-2">
+                    @if (ViewBag.Errors != null)
+                    {
+                        <div class="alert alert-danger">
+                            <ul class="list-unstyled mb-0">
+                                @foreach (var error in ViewBag.Errors)
+                                {
+                                    <li><i class="fas fa-exclamation-circle me-2 text-danger"></i>@error</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

@@ -1,0 +1,59 @@
+@using FlowForge.Core.DTO
+@model TaskResponse
+@{
+    ViewBag.Title = "Edit Task";
+}
+
+<div class="container py-5 d-flex justify-content-center">
+    <div class="card bg-dark text-light shadow-sm border-secondary" style="width: 100%; max-width: 600px;">
+        <div class="card-body">
+            <h2 class="card-title mb-3 text-info">
+                <i class="fas fa-edit me-2"></i> Edit Task
+            </h2>
+            <p class="text-muted">Update your task details</p>
+
+            <form asp-controller="Tasks" asp-action="EditTask">
+                <input asp-for="ProjectId" type="hidden" />
+                <input asp-for="TaskId" type="hidden" />
+
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label text-light">
+                        <i class="fas fa-heading me-1"></i> Task Title
+                    </label>
+                    <input asp-for="Title" class="form-control bg-secondary text-light border-0" placeholder="Enter task title" required />
+                    <span asp-validation-for="Title" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label text-light">
+                        <i class="fas fa-align-left me-1"></i> Task Description
+                    </label>
+                    <textarea asp-for="Description" class="form-control bg-secondary text-light border-0" rows="3" placeholder="Enter task description"></textarea>
+                    <span asp-validation-for="Description" class="text-danger small"></span>
+                </div>
+
+                <div class="form-check mb-4">
+                    <input asp-for="Success" class="form-check-input" />
+                    <label class="form-check-label text-light" asp-for="Success">
+                        Mark as completed
+                    </label>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a asp-controller="Tasks" asp-action="SubTasks" asp-route-id="@Model.ProjectId" class="btn btn-outline-light">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
