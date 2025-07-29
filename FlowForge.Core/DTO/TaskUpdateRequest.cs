@@ -20,7 +20,7 @@ public class TaskUpdateRequest
                 Description = Description,
                 Success = Success,
                 ProjectId = ProjectId,
-                MemberId = MemberId
+                CreatedById = MemberId
             };
         }
 }

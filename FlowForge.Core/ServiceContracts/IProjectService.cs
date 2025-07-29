@@ -7,7 +7,7 @@ namespace FlowForge.Core.ServiceContracts
     {
         Task<Project> CreateProject(ProjectAddRequest projectAddRequest, Guid userId);
         Task<List<Project>> GetProjects(Guid userId);
-        Task<ProjectResponse> GetProjectById(Guid userId, Guid? projectId);
+        Task<Project> GetProjectById(Guid userId, Guid? projectId);
         Task<ProjectResponse> UpdateProject(Guid? projectId, ProjectUpdateRequest projectUpdateRequest);
         Task<IEnumerable<ProjectMember>> GetProjectMembers(Guid? projectId);
         Task<bool> DeleteProject(Guid userId, Guid projectId);

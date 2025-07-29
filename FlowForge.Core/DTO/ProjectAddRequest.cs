@@ -8,7 +8,7 @@ namespace FlowForge.Core.DTO
         public string SelectedColor { get; set; } = "#8b1c32";
         public DateTime? CreatedAt { get; set; }
     
-        public Project ToGroupTasks()
+        public Project ToProject()
         {
             return new Project
             {

@@ -21,8 +21,8 @@ public static class ScheduleTaskRequestExtensions
         {
             TaskId = request.TaskId ?? Guid.NewGuid(),
             ProjectId = request.ProjectId ?? Guid.Empty,
-            MemberId = request.MemberId,
-            ScheduledDateTime = new DateTime(request.ScheduleDate.Year, request.ScheduleDate.Month, request.ScheduleDate.Day, request.ScheduleTime.Hour, request.ScheduleTime.Minute, 0),
+            CreatedById = request.MemberId,
+            ScheduleDateTime = new DateTime(request.ScheduleDate.Year, request.ScheduleDate.Month, request.ScheduleDate.Day, request.ScheduleTime.Hour, request.ScheduleTime.Minute, 0),
             IsRecurring = request.IsRecurring,
             RecurringInterval = request.RecurringInterval
         };

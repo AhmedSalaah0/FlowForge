@@ -6,6 +6,6 @@ namespace FlowForge.Core.Domain.IdentityEntities
     public class ApplicationUser : IdentityUser<Guid>
     {
         public string? PersonName { get; set; }
-        public ICollection<ProjectMember> UserGroups { get; set; }
+        public ICollection<ProjectMember> ProjectMembers { get; set; }
     }
 }

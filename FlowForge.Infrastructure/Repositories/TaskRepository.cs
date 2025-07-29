@@ -29,11 +29,11 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
         return _context.Tasks.FirstOrDefaultAsync(temp => temp.TaskId == taskId && temp.ProjectId == groupId);
     }
 
-    public async Task<List<ProjectTask>> GetTasks(Guid userId, Guid groupId)
+    public async Task<List<ProjectSection>> GetTasks(Guid userId, Guid groupId)
     {
-        return await _context.Tasks
-            .Where(temp => temp.ProjectId == groupId && (temp.MemberId == userId || 
-            _context.ProjectMembers.Any(t => t.ProjectId == groupId && t.MemberId == userId)))
+        return await _context.Sections
+            .Where(section => section.ProjectId == groupId)
+            .Include(section => section.Tasks)
             .ToListAsync();
     }
 
@@ -63,6 +63,7 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
         {
             return null;
         }
+        task.SectionId = taskToUpdate.SectionId;
         _context.Entry(taskToUpdate).CurrentValues.SetValues(task);
         await _context.SaveChangesAsync();
         return task;

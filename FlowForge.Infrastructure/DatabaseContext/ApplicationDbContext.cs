@@ -10,50 +10,72 @@ namespace FlowForge.Infrastructure.DatabaseContext
         public ApplicationDbContext(DbContextOptions options) : base(options) { }
         public virtual DbSet<Project> Projects { get; set; }
         public virtual DbSet<ProjectTask> Tasks { get; set; }
+        public virtual DbSet<ProjectSection> Sections { get; set; }
         public virtual DbSet<ProjectMember> ProjectMembers { get; set; }
         public virtual DbSet<Notification> Notifications { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.Entity<ProjectMember>()
-            .HasKey(ug => new { ug.MemberId, ug.ProjectId });
 
-            modelBuilder.Entity<ProjectMember>()
-                .HasOne(ug => ug.Member)
-                .WithMany(u => u.UserGroups)
-                .HasForeignKey(ug => ug.MemberId);
-
-            modelBuilder.Entity<ProjectMember>()
-                .HasOne(ug => ug.Project)
-                .WithMany(g => g.ProjectMembers)
-                .HasForeignKey(ug => ug.ProjectId);
-
-            modelBuilder.Entity<Project>().ToTable("Projects").HasKey("ProjectId");
-            modelBuilder.Entity<ProjectTask>().ToTable("ProjectTasks").HasKey("TaskId");
-
-            modelBuilder.Entity<ProjectTask>()
-                .HasOne<Project>()
-                .WithMany()
-                .HasForeignKey(t=> t.ProjectId)
-                .OnDelete(DeleteBehavior.Cascade);
-            
-            modelBuilder.Entity<ProjectTask>()
-                .HasOne<ApplicationUser>()
-                .WithMany()
-                .HasForeignKey(t => t.MemberId)
-                .OnDelete(DeleteBehavior.Cascade); 
+            modelBuilder.Entity<Project>().ToTable("Projects").HasKey(p => p.ProjectId);
 
             modelBuilder.Entity<Project>()
-            .HasOne(g => g.CreatedBy)
-            .WithMany()
-            .HasForeignKey(g => g.CreatedById)
-            .OnDelete(DeleteBehavior.Restrict);
+                .HasOne(p => p.CreatedBy)
+                .WithMany()
+                .HasForeignKey(p => p.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Project>()
+                .HasMany(p => p.ProjectMembers)
+                .WithOne(pm => pm.Project)
+                .HasForeignKey(pm => pm.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProjectSection>().ToTable("ProjectSections").HasKey(s => s.SectionId);
+
+            modelBuilder.Entity<ProjectSection>()
+                .HasOne(s => s.CreatedBy)
+                .WithMany()
+                .HasForeignKey(s => s.CreatedById)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProjectSection>()
+                .HasMany(s => s.Tasks)
+                .WithOne(t => t.Section)
+                .HasForeignKey(t => t.SectionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ProjectTask>().ToTable("ProjectTasks").HasKey(t => t.TaskId);
+
+            modelBuilder.Entity<ProjectTask>()
+                .HasOne(t => t.Project)
+                .WithMany()
+                .HasForeignKey(t => t.ProjectId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ProjectTask>()
+                .HasOne(t => t.CreatedBy)
+                .WithMany()
+                .HasForeignKey(t => t.CreatedById)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProjectMember>()
+                .HasKey(pm => new { pm.MemberId, pm.ProjectId });
+
+            modelBuilder.Entity<ProjectMember>()
+                .HasOne(pm => pm.Member)
+                .WithMany(u => u.ProjectMembers)
+                .HasForeignKey(pm => pm.MemberId);
+
+            modelBuilder.Entity<ProjectMember>()
+                .HasOne(pm => pm.Project)
+                .WithMany(p => p.ProjectMembers)
+                .HasForeignKey(pm => pm.ProjectId);
+
+            modelBuilder.Entity<Notification>().HasKey(n => n.NotificationId);
 
             modelBuilder.Entity<Notification>()
-                .HasKey(n => n.NotificationId);
-
-            modelBuilder.Entity<Notification>()
-                .HasOne(n=> n.Receiver)
+                .HasOne(n => n.Receiver)
                 .WithMany()
                 .HasForeignKey(n => n.ReceiverId)
                 .OnDelete(DeleteBehavior.Cascade);

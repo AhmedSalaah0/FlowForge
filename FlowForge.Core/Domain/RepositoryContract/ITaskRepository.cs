@@ -1,11 +1,12 @@
 using FlowForge.Core.Domain.Entities;
+using FlowForge.Core.DTO;
 
 namespace FlowForge.Core.Domain.RepositoryContract;
 
 public interface ITaskRepository
 {
     Task<ProjectTask> CreateTask(ProjectTask task);
-    Task<List<ProjectTask>> GetTasks(Guid userId ,Guid ProjectId);
+    Task<List<ProjectSection>> GetTasks(Guid userId ,Guid ProjectId);
     Task<ProjectTask?> GetTaskById(Guid? ProjectId, Guid? taskId);
     Task<ProjectTask?> UpdateTask(ProjectTask task);
     Task<IEnumerable<ProjectTask>> GetCompletedTasks();

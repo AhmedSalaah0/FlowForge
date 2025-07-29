@@ -30,14 +30,16 @@ namespace FlowForge.UI.Controllers
             {
                 return BadRequest("Error");
             }
+
             return View(tasks);
         }
 
         [HttpGet]
         [Route("projects/tasks/new")]
-        public IActionResult Task(Guid projectId)
+        public IActionResult Task(Guid projectId, Guid sectionId)
         {
             ViewBag.projectId = projectId;
+            ViewBag.sectionId = sectionId;
             return View("AddTask");
         }
 
@@ -150,7 +152,7 @@ namespace FlowForge.UI.Controllers
             }
 
             var taskToDelete = task.ToToDoItem();
-            taskToDelete.MemberId = user.Id;
+            taskToDelete.CreatedById = user.Id;
             bool DeleteSuccess = await _taskService.DeleteTask(taskToDelete);
             if (!DeleteSuccess)
             {

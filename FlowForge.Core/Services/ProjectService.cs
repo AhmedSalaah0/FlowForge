@@ -17,7 +17,7 @@ namespace FlowForge.Core.Services
         {
             ArgumentNullException.ThrowIfNull(groupAddRequest);
             groupAddRequest.CreatedAt = DateTime.Now;
-            Project groupTasks = groupAddRequest.ToGroupTasks();
+            Project groupTasks = groupAddRequest.ToProject();
             groupTasks.CreatedById = userId;
             var UserGroup = new ProjectMember
             {
@@ -37,7 +37,7 @@ namespace FlowForge.Core.Services
             return projects;
         }
 
-        public async Task<ProjectResponse> GetProjectById(Guid userId, Guid? projectId)
+        public async Task<Project> GetProjectById(Guid userId, Guid? projectId)
         {
             if (projectId == null)
             {
@@ -54,7 +54,7 @@ namespace FlowForge.Core.Services
                 throw new UnauthorizedAccessException("You are not a member of this project.");
             }
 
-            return project.ToProjectResponse(userId);
+            return project;
         }
         public async Task<ProjectResponse> UpdateProject(Guid? projectId, ProjectUpdateRequest projectUpdateRequest)
         {

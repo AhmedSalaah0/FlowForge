@@ -12,5 +12,7 @@ namespace FlowForge.Core.Domain.Entities
         public DateTime? CreatedAt { get; set; }
 
         public ICollection<ProjectMember> ProjectMembers { get; set; } = [];
+        public ICollection<ProjectSection> Sections { get; set; } = [];
+
     }
 }

@@ -14,24 +14,24 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
     {
         ArgumentNullException.ThrowIfNull(task);
 
-        var toDoTask = task.ToTask();
-        toDoTask.MemberId = userId;
-        toDoTask.TaskId = Guid.NewGuid();
+        var ProjectTask = task.ToTask();
+        ProjectTask.CreatedById = userId;
+        ProjectTask.TaskId = Guid.NewGuid();
         var project = await _projectService.GetProjectById(userId, task.ProjectId);
         if (project == null)
         {
             throw new ArgumentException("invalid projectId");
         }
-        if (project.UserRole == ProjectRole.Member)
+        if (project.ProjectMembers.FirstOrDefault(u => u.MemberId == userId)?.MemberRole == ProjectRole.Member)
         {
             throw new UnauthorizedAccessException("You are not authorized to add tasks to this project.");
         }
-        await _taskRepository.CreateTask(toDoTask);
-        var taskResponse = toDoTask.ToTaskResponse();
+        await _taskRepository.CreateTask(ProjectTask);
+        var taskResponse = ProjectTask.ToTaskResponse();
         return taskResponse;
     }
 
-    public async Task<IEnumerable<TaskResponse>?> GetAllProjectTasks(Guid userId, Guid projectId)
+    public async Task<IEnumerable<SectionWithTasksResponse>?> GetAllProjectTasks(Guid userId, Guid projectId)
     {
         if (projectId == Guid.Empty)
         {
@@ -47,7 +47,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         {
             return null;
         }
-        return Tasks.Select(t => t.ToTaskResponse()); 
+        return [.. Tasks.Select(s => s.ToSectionWithTasksResponse())];
     }
 
     public async Task<TaskResponse?> GetTaskById(Guid? projectId, Guid? taskId)
@@ -86,7 +86,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         List<List<TaskResponse>>? tasks = [];
         foreach (var project in allProjectss)
         {
-            tasks.Add([.. (await GetAllProjectTasks(userId, project.ProjectId))?.Where(task => task.Success)]);
+            //tasks.Add([.. (await GetAllProjectTasks(userId, project.ProjectId))?.Where(task => task.Success)]);
         }
         if (tasks.Count == 0)
         {
@@ -108,7 +108,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
             return false;
         }
 
-        var project = await _projectService.GetProjectById(task.MemberId, projectTask.ProjectId);
+        var project = await _projectService.GetProjectById(task.CreatedById, projectTask.ProjectId);
         if (project is null)
         {
             return false;
@@ -140,7 +140,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
 
         DateTime scheduledDateTime = request.ScheduleDate.ToDateTime(request.ScheduleTime);
         
-        task.ScheduledDateTime = scheduledDateTime;
+        task.ScheduleDateTime = scheduledDateTime;
         task.IsRecurring = request.IsRecurring;
         task.RecurringInterval = request.IsRecurring ? request.RecurringInterval : 0;
         
@@ -162,11 +162,11 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         {
             return false;
         }
-        if (task.MemberId != userId && GroupUsers.FirstOrDefault(u => u.MemberId == userId && u.ProjectId == projectId)?.MemberRole == ProjectRole.Member)
+        if (task.CreatedById != userId && GroupUsers.FirstOrDefault(u => u.MemberId == userId && u.ProjectId == projectId)?.MemberRole == ProjectRole.Member)
         {
             return false;
         }
-        task.ScheduledDateTime = null;
+        task.ScheduleDateTime = null;
         task.IsRecurring = false;
         task.RecurringInterval = 0;
         await _taskRepository.UpdateTask(task);

@@ -11,6 +11,8 @@ public class TaskResponse
     public DateTime? ScheduleDateTime { get; set; }
     public bool IsRecurring { get; set; } = false;
     public int RecurringInterval { get; set; } = 0;
+    public Guid? SectionId { get; set; }
+    public string SectionName { get; set; } = "General";
     public Guid ProjectId { get; set; }
     public override bool Equals(object? obj)
     {
@@ -44,11 +46,12 @@ public class TaskResponse
             TaskId = TaskId,
             Title = Title,
             Description = Description,
-            ScheduledDateTime = ScheduleDateTime,
+            ScheduleDateTime = ScheduleDateTime,
             IsRecurring = IsRecurring,
             RecurringInterval = RecurringInterval,
             Success = Success,
             ProjectId = ProjectId,
+            SectionId = SectionId
         };
     }
 }
@@ -63,10 +66,11 @@ public static class TaskExtensions
             Title = task.Title,
             Description = task.Description,
             Success = task.Success,
-            ScheduleDateTime = task.ScheduledDateTime,
+            ScheduleDateTime = task.ScheduleDateTime,
             IsRecurring = task.IsRecurring,
             RecurringInterval = task.RecurringInterval,
             ProjectId = task.ProjectId,
+            SectionId = task.SectionId,
         };
     }
 }

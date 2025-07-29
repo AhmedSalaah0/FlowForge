@@ -71,6 +71,7 @@ namespace FlowForge.Core.Services
                 throw new ArgumentException("Project member not found.");
             }
             await _projectMemberRepository.AcceptProjectMember(projectMember);
+            await _notificationService.MarkNotificationAsRead((await _notificationService.GetNotifications(userId)).FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == userId).NotificationId);
             return true;
         }
 
@@ -86,6 +87,7 @@ namespace FlowForge.Core.Services
                 throw new ArgumentException("Project member not found.");
             }
             await _projectMemberRepository.RejectProjectMember(projectMember);
+            await _notificationService.MarkNotificationAsRead((await _notificationService.GetNotifications(userId)).FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == userId).NotificationId);
             await _notificationService.SendNotification(new Notification
             {
                 NotificationId = Guid.NewGuid(),

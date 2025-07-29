@@ -7,11 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Properties\launchSettings.json" />
+    <Compile Remove="Properties\PublishProfiles\**" />
+    <Content Remove="Properties\PublishProfiles\**" />
+    <EmbeddedResource Remove="Properties\PublishProfiles\**" />
+    <None Remove="Properties\PublishProfiles\**" />
+    <_WebToolingArtifacts Remove="Properties\PublishProfiles\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Properties\PublishProfiles\site22604-WebDeploy.pubxml.user" />
+    <Content Include="Properties\launchSettings.json" />
   </ItemGroup>
 
   <ItemGroup>
