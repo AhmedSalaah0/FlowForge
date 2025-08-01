@@ -81,3 +81,4 @@ coverage/
 
 # Optional: exclude environment-specific configs
 appsettings.Development.json
+/FlowForge.UI/Properties/PublishProfiles
