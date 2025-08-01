@@ -23,21 +23,19 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpPost]
-
         public async Task<IActionResult> Login(LoginDTO loginDTO)
         {
             if (!ModelState.IsValid)
             {
-                ViewBag.Errors = ModelState.Values.SelectMany(temp => temp.Errors).
-                    Select(temp => temp.ErrorMessage);
                 return View(loginDTO);
             }
             ApplicationUser? user = await _userManager.FindByEmailAsync(loginDTO.Email);
             if (user == null)
             {
-                ModelState.AddModelError("Login", "Invalid Email or Password");
+                ModelState.AddModelError(nameof(LoginDTO.Email), "Invalid Email or Password");
                 return View(loginDTO);
             }
+
             var result = await _signInManager.PasswordSignInAsync(user, loginDTO.Password, loginDTO.RememberMe, false);
             if (result.Succeeded)
             {
@@ -45,7 +43,7 @@ namespace FlowForge.UI.Controllers
             }
             else
             {
-                ModelState.AddModelError("Login", "Invalid Email or Password");
+                ModelState.AddModelError(nameof(LoginDTO.Email), "Invalid Email or Password");
                 return View();
             }
         }
@@ -67,7 +65,7 @@ namespace FlowForge.UI.Controllers
             var existingUser = await _userManager.FindByEmailAsync(registerDTO.Email);
             if (existingUser != null)
             {
-                ModelState.AddModelError("Email", "Email is already in use");
+                ModelState.AddModelError(nameof(RegisterDTO.Email), "Email is already in use");
                 return View(registerDTO);
             }
 

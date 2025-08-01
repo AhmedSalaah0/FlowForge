@@ -11,7 +11,7 @@ namespace FlowForge.UI.Controllers
     [Controller]
     [Route("[controller]")]
     //[Authorize]
-    public class TasksController(IProjectService projectService, ITaskService taskService, UserManager<ApplicationUser> userManager) : Controller
+    public class TasksController(IProjectService projectService, ITaskService taskService, IProjectMemberService projectMemberService, UserManager<ApplicationUser> userManager) : Controller
     {
         private readonly IProjectService _projectService = projectService;
         private readonly ITaskService _taskService = taskService;
@@ -28,6 +28,8 @@ namespace FlowForge.UI.Controllers
             }
             var tasks = await _taskService.GetAllProjectTasks(user.Id, projectId);
             ViewBag.projectId = projectId;
+            var members = await _projectService.GetProjectMembers(projectId);
+            ViewBag.members = members;
             if (tasks == null)
             {
                 return BadRequest("Error");

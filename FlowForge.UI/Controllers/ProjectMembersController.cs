@@ -8,12 +8,13 @@ namespace FlowForge.UI.Controllers
 {
     [Controller]
     [Route("[controller]")]
-    public class ProjectMembersController(UserManager<ApplicationUser> userManager, IProjectService projectService, IProjectMemberService projectMemberService, INotificationService notificationService) : Controller
+    public class ProjectMembersController(UserManager<ApplicationUser> userManager, IProjectService projectService, IProjectMemberService projectMemberService, ITaskService taskService, INotificationService notificationService) : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager = userManager;
         private readonly IProjectService _projectService = projectService;
         private readonly IProjectMemberService _projectMemberService = projectMemberService;
         private readonly INotificationService _notificationService = notificationService;
+        private readonly ITaskService _taskService = taskService;
 
         [HttpGet]
         [Route("[action]")]
@@ -106,6 +107,32 @@ namespace FlowForge.UI.Controllers
             {
                 ModelState.AddModelError("", $"Error rejecting invite: {ex.Message}");
                 return View();
+            }
+        }
+
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<IActionResult> RemoveMember(Guid projectId, Guid memberId)
+        {
+            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+            if (user == null)
+            {
+                return Unauthorized("User not found");
+            }
+            try
+            {
+                await _projectMemberService.RemoveProjectMember(projectId, memberId, user.Id);
+                return RedirectToAction("Tasks", "Tasks");
+            }
+            catch (Exception ex)
+            {
+                var sections = await _taskService.GetAllProjectTasks(user.Id, projectId);
+                var members = await _projectService.GetProjectMembers(projectId);
+                ViewBag.Members = members;
+                ViewBag.ProjectId = projectId;
+                ModelState.AddModelError("", $"Error removing member: {ex.Message}");
+
+                return View("~/Views/Tasks/Tasks.cshtml", sections);
             }
         }
 

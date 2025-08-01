@@ -55,9 +55,45 @@ namespace FlowForge.Core.Services
             }
             return false;
         }
-        public async Task<bool> RemoveProjectMember(Guid projectId, Guid userId)
+        public async Task<bool> RemoveProjectMember(Guid projectId, Guid memberId, Guid userId)
         {
-            throw new NotImplementedException("This method is not implemented yet.");
+            if (projectId == Guid.Empty || memberId == Guid.Empty ||userId == Guid.Empty)
+            {
+                throw new ArgumentException("Invalid Remove Attempts");
+            }
+            var projectMembers = await _projectRepository.GetProjectMembers(projectId);
+
+            var memberToRemove = projectMembers.FirstOrDefault(pm => pm.MemberId == memberId && pm.ProjectId == projectId);
+            if (memberToRemove == null)
+            {
+                throw new ArgumentException("Member not found in the project.");
+            }
+            if (projectMembers.Any(pm => pm.MemberId == userId && pm.ProjectId == projectId && pm.MemberRole == ProjectRole.Member))
+            {
+                throw new UnauthorizedAccessException("Only admin and moderator can remove members from the project.");
+            }
+
+            if (memberToRemove.MemberRole == ProjectRole.Creator)
+            {
+                throw new UnauthorizedAccessException("Cannot remove the project creator.");
+            }
+
+            await _projectMemberRepository.RemoveProjectMember(memberToRemove);
+            var notification = (await _notificationService.GetNotifications(userId))?.FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == userId)?.NotificationId;
+            await _notificationService.DeleteNotification(notification ?? Guid.Empty);
+            await _notificationService.SendNotification(new Notification
+            {
+                NotificationId = Guid.NewGuid(),
+                SenderId = userId,
+                ReceiverId = memberToRemove.Project.CreatedById,
+                ProjectId = projectId,
+                Message = $"{memberToRemove.Member.PersonName} has been removed from the project {memberToRemove.Project.ProjectTitle}.",
+                NotificationType = NotificationType.INFO,
+                Sender = memberToRemove.Member,
+                Receiver = memberToRemove.Project.CreatedBy,
+                Project = memberToRemove.Project
+            });
+            return true;
         }
         public async Task<bool> AcceptProjectMember(Guid projectId, Guid userId)
         {

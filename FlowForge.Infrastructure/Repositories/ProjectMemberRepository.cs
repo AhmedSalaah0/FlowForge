@@ -35,7 +35,8 @@ namespace FlowForge.Infrastructure.Repositories
 
         public Task<bool> RemoveProjectMember(ProjectMember projectMember)
         {
-            throw new NotImplementedException();
+            _context.ProjectMembers.Remove(projectMember);
+            return _context.SaveChangesAsync().ContinueWith(t => t.Result > 0);
         }
     }
 }

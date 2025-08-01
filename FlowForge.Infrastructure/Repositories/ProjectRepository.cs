@@ -13,7 +13,7 @@ public class ProjectRepository(ApplicationDbContext context) : IProjectRepositor
     {
         await _context.AddAsync(project);
         await _context.SaveChangesAsync();
-        return project; 
+        return project;
     }
 
     public async Task<Project?> GetProjectById(Guid? userId, Guid? id)
@@ -28,7 +28,7 @@ public class ProjectRepository(ApplicationDbContext context) : IProjectRepositor
     {
         return await _context.Projects
             .Include(g => g.ProjectMembers)
-            .Where(g => g.CreatedById == userId || (g.ProjectMembers.Any(g => g.MemberId == userId && g.MembershipStatus == MembershipStatus.ACCEPTED)))
+            .Where(g => g.ProjectMembers.Any(g => g.MemberId == userId && (g.MembershipStatus == MembershipStatus.ACCEPTED || g.MemberRole == ProjectRole.Creator)))
             .OrderBy(g => g.CreatedAt)
             .ToListAsync();
     }
