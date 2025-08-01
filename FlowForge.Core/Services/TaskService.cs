@@ -172,4 +172,31 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         await _taskRepository.UpdateTask(task);
         return true;
     }
+
+    public async Task MoveTask(Guid userId, MoveTaskRequest request)
+    {
+        if (request is null || request.TaskId == Guid.Empty || request.ProjectId == Guid.Empty)
+        {
+            throw new ArgumentException("Invalid request");
+        }
+        var task = await _taskRepository.GetTaskById(request.ProjectId, request.TaskId);
+        if (task is null)
+        {
+            throw new ArgumentException("Task not found");
+        }
+        var project = await _projectService.GetProjectById(userId, request.ProjectId);
+        if (project is null)
+        {
+            throw new ArgumentException("Project not found");
+        }
+        if (project.ProjectMembers.FirstOrDefault(u => u.MemberId == userId)?.MemberRole == ProjectRole.Member)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to move tasks in this project.");
+        }
+        bool result = await _taskRepository.MoveTask(task, request.NewSectionId);
+        if (!result)
+        {
+            throw new InvalidOperationException("Failed to move task. Please check the section ID and try again.");
+        }
+    }
 }

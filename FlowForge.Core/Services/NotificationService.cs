@@ -18,6 +18,10 @@ namespace FlowForge.Core.Services
             {
                 throw new ArgumentNullException(nameof(notification), "Notification cannot be null.");
             }
+            if (notification.NotificationId == Guid.Empty)
+            {
+                notification.NotificationId = Guid.NewGuid();
+            }
             var result = _notificationRepository.SendNotification(notification);
             return result;
         }

@@ -4,6 +4,7 @@ using FlowForge.Core.ServiceContracts;
 using FlowForge.Core.Services;
 using FlowForge.Infrastructure.DatabaseContext;
 using FlowForge.Infrastructure.Repositories;
+using FlowForge.UI.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -31,10 +32,8 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 
     .AddRoleStore<RoleStore<ApplicationRole, ApplicationDbContext, Guid>>();
 
-builder.Services.AddAuthorization(options =>
-{
-    options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build(); 
-});
+builder.Services.AddAuthorizationBuilder()
+    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
 builder.Services.ConfigureApplicationCookie(options => {
     options.LoginPath = "/Account/Login";
@@ -53,9 +52,20 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseExceptionHandling();
+    app.UseStatusCodePagesWithReExecute("/Error", "?code={0}");
+}
+
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 await app.RunAsync();

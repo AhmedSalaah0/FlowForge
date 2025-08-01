@@ -12,4 +12,5 @@ public interface ITaskRepository
     Task<IEnumerable<ProjectTask>> GetCompletedTasks();
     Task<bool> DeleteTask(ProjectTask task);
     Task<bool> CheckAsCompleted(Guid? taskId);
+    Task<bool> MoveTask(ProjectTask task, Guid NewSectionId);
 }

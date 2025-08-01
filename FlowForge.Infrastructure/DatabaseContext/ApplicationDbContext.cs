@@ -43,7 +43,7 @@ namespace FlowForge.Infrastructure.DatabaseContext
                 .HasMany(s => s.Tasks)
                 .WithOne(t => t.Section)
                 .HasForeignKey(t => t.SectionId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<ProjectTask>().ToTable("ProjectTasks").HasKey(t => t.TaskId);
 
@@ -57,7 +57,7 @@ namespace FlowForge.Infrastructure.DatabaseContext
                 .HasOne(t => t.CreatedBy)
                 .WithMany()
                 .HasForeignKey(t => t.CreatedById)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<ProjectMember>()
                 .HasKey(pm => new { pm.MemberId, pm.ProjectId });

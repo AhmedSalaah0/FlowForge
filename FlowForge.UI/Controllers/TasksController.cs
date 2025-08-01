@@ -4,10 +4,12 @@ using FlowForge.Core.ServiceContracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FlowForge.UI.Controllers
 {
     [Controller]
+    [Route("[controller]")]
     //[Authorize]
     public class TasksController(IProjectService projectService, ITaskService taskService, UserManager<ApplicationUser> userManager) : Controller
     {
@@ -151,7 +153,7 @@ namespace FlowForge.UI.Controllers
                 return Unauthorized("User not found");
             }
 
-            var taskToDelete = task.ToToDoItem();
+            var taskToDelete = task.ToTask();
             taskToDelete.CreatedById = user.Id;
             bool DeleteSuccess = await _taskService.DeleteTask(taskToDelete);
             if (!DeleteSuccess)
@@ -225,6 +227,23 @@ namespace FlowForge.UI.Controllers
             }
 
             return Ok(new { success = true, taskId });
+        }
+
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<IActionResult> MoveTask([FromBody] MoveTaskRequest request)
+        {
+            var task = await _taskService.GetTaskById(request.ProjectId, request.TaskId);
+            if (task == null) return NotFound();
+
+            var user = await _userManager.FindByEmailAsync(User.Identity.Name);
+            if (user == null)
+            {
+                return Unauthorized("User not found");
+            }
+
+            await _taskService.MoveTask(user.Id, request);
+            return Ok();
         }
     }
 }

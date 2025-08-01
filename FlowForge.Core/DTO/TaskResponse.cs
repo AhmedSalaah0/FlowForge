@@ -39,7 +39,7 @@ public class TaskResponse
         return $"{TaskId}, {Title}, {Description}, {Success}, {ProjectId}";
     }
 
-    public ProjectTask ToToDoItem()
+    public ProjectTask ToTask()
     {
         return new ProjectTask()
         {

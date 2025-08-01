@@ -39,7 +39,7 @@ namespace FlowForge.UI.Controllers
             return RedirectToAction("Tasks", "Tasks", new { projectId = sectionAddRequest.ProjectId});
         }
 
-        [HttpGet]
+        [HttpGet("DeleteSection")]
         public async Task<IActionResult> DeleteSection(Guid sectionId, Guid projectId)
         {
             if (sectionId == Guid.Empty || projectId == Guid.Empty)
@@ -53,6 +53,7 @@ namespace FlowForge.UI.Controllers
                 ModelState.AddModelError("User", "User not Found");
                 return RedirectToAction("Tasks", "Tasks", new { projectId });
             }
+
             await _sectionService.DeleteSection(user.Id, sectionId);
             return RedirectToAction("Tasks", "Tasks", new { projectId });
         }

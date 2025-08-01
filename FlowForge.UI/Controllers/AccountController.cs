@@ -102,5 +102,34 @@ namespace FlowForge.UI.Controllers
             await _signInManager.SignOutAsync();
             return RedirectToAction("Login", "Account");
         }
+
+        //[HttpPost]
+        //public async Task<IActionResult> ResetPassword(ResetPasswordDTO resetPasswordDTO)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return View(resetPasswordDTO);
+        //    }
+        //    var user = await _userManager.FindByEmailAsync(resetPasswordDTO.Email);
+        //    if (user == null)
+        //    {
+        //        ModelState.AddModelError("Email", "User not found");
+        //        return View(resetPasswordDTO);
+        //    }
+        //    var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+        //    var result = await _userManager.ResetPasswordAsync(user, resetToken, resetPasswordDTO.NewPassword);
+        //    if (result.Succeeded)
+        //    {
+        //        return RedirectToAction("Login", "Account");
+        //    }
+        //    else
+        //    {
+        //        foreach (var error in result.Errors)
+        //        {
+        //            ModelState.AddModelError("", error.Description);
+        //        }
+        //        return View(resetPasswordDTO);
+        //    }
+        //}
     }
 }

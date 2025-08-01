@@ -1,4 +1,4 @@
-@model IEnumerable<SectionWithTasksResponse>
+﻿@model IEnumerable<SectionWithTasksResponse>
 @{
     ViewBag.Title = "Tasks";
     var projectId = ViewBag.ProjectId;
@@ -24,9 +24,10 @@
                     </a>
                 </div>
 
-                @foreach (var task in s.Tasks)
+                <div class="task-list" id="section-@s.SectionId" data-section-id="@s.SectionId" data-project-id="@s.ProjectId">
+                    @foreach (var task in s.Tasks)
                 {
-                    <div class="task-card mb-3 p-3 rounded-3 shadow-sm d-flex flex-column gap-2 position-relative">
+                    <div class="task-card mb-3 p-3 rounded-3 shadow-sm d-flex flex-column gap-2 position-relative" data-task-id="@task.TaskId">
 
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="form-check">
@@ -68,6 +69,7 @@
                         </div>
                     </div>
                 }
+                </div>
 
 
                 <a asp-controller="Tasks" asp-action="Task"
@@ -98,7 +100,7 @@
 @section Scripts {
     <script>
         function CheckOrUnCheck(taskId, projectId) {
-            fetch(`/taskState/${taskId}`, {
+            fetch(`/tasks/taskState/${taskId}`, {
                 method: 'POST'
             })
             .then(response => {
@@ -108,5 +110,72 @@
             .then(data => console.log("Task updated:", data))
             .catch(err => alert(err.message));
         }
+
+    document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".task-list").forEach(list => {
+        new Sortable(list, {
+            group: "tasks",
+            animation: 100,
+            delay: 0,
+            delayOnTouchStart: false,
+            forceFallback: false, 
+            fallbackTolerance: 0, 
+            dragoverBubble: false,
+            removeCloneOnHide: true,
+            preventOnFilter: false,
+            
+            onStart: function(evt) {
+                evt.item.style.opacity = "0.6";
+                evt.item.style.transform = "rotate(5deg)";
+            },
+            
+            onEnd: async function (evt) {
+                evt.item.style.opacity = "1";
+                evt.item.style.transform = "none";
+                
+                const taskId = evt.item.dataset.taskId;
+                
+                console.log("From element:", evt.from);
+                console.log("To element:", evt.to);
+                console.log("From attributes:", evt.from.attributes);
+                console.log("To attributes:", evt.to.attributes);
+                
+                const oldSectionId = evt.from.dataset.sectionId;
+                const newSectionId = evt.to.dataset.sectionId;
+                const projectId = evt.to.dataset.projectId;
+
+                console.log(`Task ID: ${taskId}`);
+                console.log(`Old Section: ${oldSectionId}, New Section: ${newSectionId}`);
+                console.log(`Project ID: ${projectId}`);
+
+                if (oldSectionId === newSectionId) {
+                    console.log("Task dropped in the same section. No API call.");
+                    return;
+                }
+
+                try {
+                    const response = await fetch("/Tasks/MoveTask", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            TaskId: taskId,
+                            NewSectionId: newSectionId,
+                            ProjectId: projectId
+                        })
+                    });
+
+                    if (!response.ok) throw new Error("Failed to move task.");
+                    console.log(`✅ Task ${taskId} moved from ${oldSectionId} to ${newSectionId}`);
+                } catch (err) {
+                    alert(err.message);
+                    location.reload();
+                }
+            }
+        });
+    });
+});
     </script>
+
 }

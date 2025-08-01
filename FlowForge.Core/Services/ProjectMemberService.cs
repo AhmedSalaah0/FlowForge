@@ -71,7 +71,35 @@ namespace FlowForge.Core.Services
                 throw new ArgumentException("Project member not found.");
             }
             await _projectMemberRepository.AcceptProjectMember(projectMember);
-            await _notificationService.MarkNotificationAsRead((await _notificationService.GetNotifications(userId)).FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == userId).NotificationId);
+            var notification = (await _notificationService.GetNotifications(userId))?.FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == userId);
+
+            await _notificationService.SendNotification(new Notification
+            {
+                NotificationId = Guid.NewGuid(),
+                SenderId = userId,
+                ReceiverId = projectMember.Project.CreatedById,
+                ProjectId = projectId,
+                Message = $"{projectMember.Member.PersonName} has been accepted to join the project {projectMember.Project.ProjectTitle}.",
+                NotificationType = NotificationType.INFO,
+                Sender = projectMember.Member,
+                Receiver = projectMember.Project.CreatedBy,
+                Project = projectMember.Project
+            });
+
+            var AcceptedNotification = new Notification
+            {
+                NotificationId = Guid.NewGuid(),
+                SenderId = projectMember.Project.CreatedById,
+                ReceiverId = userId,
+                ProjectId = projectId,
+                Message = $"You have been joined to the project {projectMember.Project.ProjectTitle}.",
+                NotificationType = NotificationType.INFO,
+                Sender = projectMember.Project.CreatedBy,
+                Receiver = projectMember.Member,
+                Project = projectMember.Project
+            };
+            await _notificationService.SendNotification(AcceptedNotification);
+            await _notificationService.DeleteNotification(notification.NotificationId);
             return true;
         }
 
@@ -87,7 +115,9 @@ namespace FlowForge.Core.Services
                 throw new ArgumentException("Project member not found.");
             }
             await _projectMemberRepository.RejectProjectMember(projectMember);
-            await _notificationService.MarkNotificationAsRead((await _notificationService.GetNotifications(userId)).FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == userId).NotificationId);
+            var notification = (await _notificationService.GetNotifications(userId))?.FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == userId)?.NotificationId;
+
+            await _notificationService.DeleteNotification(notification ?? Guid.Empty);
             await _notificationService.SendNotification(new Notification
             {
                 NotificationId = Guid.NewGuid(),

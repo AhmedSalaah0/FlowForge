@@ -68,4 +68,11 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
         await _context.SaveChangesAsync();
         return task;
     }
+
+    public async Task<bool> MoveTask(ProjectTask task, Guid NewSectionId)
+    {
+        task.SectionId = NewSectionId;
+        int num = await _context.SaveChangesAsync();
+        return num > 0;
+    }
 }

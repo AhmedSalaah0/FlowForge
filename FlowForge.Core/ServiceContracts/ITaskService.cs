@@ -13,7 +13,7 @@ namespace FlowForge.Core.ServiceContracts
         Task<bool> DeleteTask(ProjectTask task);
         Task<bool> CheckAsCompleted(Guid? taskId);
         Task<bool> ScheduleTask(ScheduleTaskRequest request);
-
         Task<bool> UnScheduleTask(Guid taskId, Guid projectId, Guid userId);
+        Task MoveTask(Guid userId, MoveTaskRequest request);
     }
 }
