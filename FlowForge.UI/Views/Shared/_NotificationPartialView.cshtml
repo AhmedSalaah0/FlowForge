@@ -1,12 +1,14 @@
 ﻿@using FlowForge.Core.Enums
 @model IEnumerable<Notification>
 
+
+
 <div class="nav-item dropdown">
     <a class="nav-link text-light position-relative" id="notificationDropdown" href="#" role="button" data-bs-toggle="dropdown">
         <i class="fas fa-bell"></i>
         @if (Model.Any(n => !n.IsRead))
         {
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            <span id="unreadCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                 @Model.Count(n => !n.IsRead)
                 <span class="visually-hidden">unread messages</span>
             </span>
@@ -46,6 +48,19 @@
                             </form>
                         </div>
                     }
+                    @{
+                        var member = notification.Project.ProjectMembers
+                        .FirstOrDefault(u => u.MemberId == notification.ReceiverId && u.ProjectId == notification.ProjectId);
+                    }
+                    @if (notification.NotificationType == NotificationType.INFO && member?.MembershipStatus == MembershipStatus.REJECTED)
+                    {
+                        <form asp-controller="ProjectMembers" asp-action="AcceptInvite" method="post" class="d-inline">
+                            <input type="hidden" name="projectId" value="@notification.ProjectId" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                Undo Rejection
+                            </button>
+                        </form>
+                    }
                 </div>
             }
 
@@ -58,16 +73,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    const dropdown = document.getElementById('notificationDropdown');
-
-    dropdown?.addEventListener('show.bs.dropdown', () => {
-        fetch('/ProjectMembers/AllNotificationsRead', {
-            method: 'POST',
-            headers: {
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-            }
-        });
-    });
-</script>

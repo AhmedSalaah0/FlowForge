@@ -41,10 +41,13 @@
                 @* <a class="nav-link text-white" href="/tasks/completed">
                     <i class="fas fa-check-double me-1"></i> Completed
                 </a> *@
-                @if (ViewBag.Title == "Home")
-                {
-                            @await Html.PartialAsync("_NotificationPartialView", ViewBag.Notifications as IEnumerable<Notification>)
-                }
+                        <div id="notificationWrapper">
+                            <div class="nav-item dropdown">
+                                <a class="nav-link text-light position-relative" href="#">
+                                    <i class="fas fa-bell"></i>
+                                </a>
+                            </div>
+                        </div>
                 <a class="nav-link text-white" href="#">
                     <i class="fas fa-user-circle me-1"></i> Profile
                 </a>
@@ -73,44 +76,48 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
-        // Dark mode toggle functionality
-        $(document).ready(function() {
-            const darkModeToggle = document.getElementById('darkModeToggle');
-            const icon = darkModeToggle.querySelector('i');
-            
-            // Check for saved theme preference or use preferred color scheme
-            const savedTheme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            
-            // Apply dark mode if saved or preferred
-            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-                document.body.classList.add('light-mode');
-                icon.classList.remove('fa-moon');
-                icon.classList.add('fa-sun');
-            }
-            
-            // Toggle dark/light mode
-            darkModeToggle.addEventListener('click', function() {
-                document.body.classList.toggle('light-mode');
-                
-                if (document.body.classList.contains('light-mode')) {
-                    localStorage.setItem('theme', 'dark');
-                    icon.classList.remove('fa-moon');
-                    icon.classList.add('fa-sun');
-                } else {
-                    localStorage.setItem('theme', 'light');
-                    icon.classList.remove('fa-sun');
-                    icon.classList.add('fa-moon');
-                }
-            });
+        document.addEventListener('DOMContentLoaded', () => {
+            const wrapper = document.getElementById('notificationWrapper');
 
-            // Add click handler for login link
-            $('a[asp-controller="Account"][asp-action="Login"]').on('click', function(e) {
-                e.preventDefault();
-                window.location.href = '/Account/Login';
+            fetch('/notification', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+                    .then(html => {
+            wrapper.innerHTML = html;
+
+            const dropdown = document.getElementById('notificationDropdown');
+            if (!dropdown) return;
+
+            dropdown.addEventListener('show.bs.dropdown', () => {
+                console.log("Dropdown opened");
+
+                fetch('/Notification/MarkAllAsRead', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                }).then(res => {
+                    if (!res.ok) {
+                        console.error("Failed to mark notifications as read");
+                    } else {
+                        console.log("Notifications marked as read");
+                        document.getElementById('unreadCount').remove();
+                    }
+                }).catch(err => {
+                    console.error("Error during fetch", err);
+                });
+            });
+        })
+            .catch(error => {
+                console.error('Failed to load notifications:', error);
             });
         });
     </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

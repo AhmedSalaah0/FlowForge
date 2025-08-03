@@ -80,5 +80,13 @@ namespace FlowForge.Core.Services
             await _notificationRepository.MarkAllNotificationsAsRead(userId);
             return true;
         }
+
+        public async Task<Notification> EditNotification(Notification notification)
+        {
+            ArgumentNullException.ThrowIfNull(notification);
+
+            var notify = await _notificationRepository.EditNotification(notification);
+            return notify;
+        }
     }
 }

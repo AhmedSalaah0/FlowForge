@@ -11,6 +11,7 @@ namespace FlowForge.Core.ServiceContracts
     {
         Task<bool> SendNotification(Notification notification);
         Task<List<Notification>> GetNotifications(Guid userId);
+        Task<Notification> EditNotification(Notification notification);
         Task<int> GetUnreadNotificationCount(Guid userId);
         Task<bool> MarkNotificationAsRead(Guid notificationId);
         Task<bool> MarkAllNotificationsAsRead(Guid userId);

@@ -62,7 +62,7 @@
         </div>
     }
 
-    <div class="d-flex overflow-auto gap-4 pb-3">
+    <div class="d-flex flex-wrap gap-3 justify-content-start">
         @foreach (var s in Model)
         {
             <div class="card bg-dark text-white shadow-sm p-3 border border-secondary rounded-4" style="min-width: 300px; flex: 0 0 auto;">
@@ -75,15 +75,16 @@
                 </div>
 
                 <div class="task-list" id="section-@s.SectionId" data-section-id="@s.SectionId" data-project-id="@s.ProjectId">
-                    @foreach (var task in s.Tasks)
+                @foreach (var task in s.Tasks)
                 {
                     <div class="task-card mb-3 p-3 rounded-3 shadow-sm d-flex flex-column gap-2 position-relative" data-task-id="@task.TaskId">
 
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox"
-                                       onchange="CheckOrUnCheck('@task.TaskId', '@task.ProjectId')"
-                                       @(task.Success ? "checked" : "") />
+                                <input class="form-check-input" type="checkbox" id="taskCheck"
+                                    data-task-id="@task.TaskId"
+                                    data-project-id="@task.ProjectId"
+                                    @(task.Success ? "checked" : "") />
                             </div>
 
                             <div class="ms-2 flex-grow-1">
@@ -131,7 +132,7 @@
             </div>
         }
 
-        <div class="card bg-dark text-white border border-secondary p-3 rounded-4 d-flex align-items-center justify-content-center"
+        <div class="card bg-dark text-white border border-secondary p-3 rounded-4 d-flex align-items-center justify-content-start"
              style="min-width: 300px; flex: 0 0 auto;">
             <form asp-controller="Sections" asp-action="AddSection" method="post" class="w-100">
                 <input type="hidden" name="ProjectId" value="@projectId" />
@@ -149,18 +150,34 @@
 
 @section Scripts {
     <script>
-        function CheckOrUnCheck(taskId, projectId) {
-            fetch(`/tasks/taskState/${taskId}`, {
-                method: 'POST'
-            })
-            .then(response => {
-                if (!response.ok) throw new Error("Failed to update task status");
-                return response.json();
-            })
-            .then(data => console.log("Task updated:", data))
-            .catch(err => alert(err.message));
-        }
+            document.querySelectorAll(".form-check-input").forEach(checkbox => {
+            checkbox.addEventListener("change", function() {
+                const taskId = this.dataset.taskId;
+                const projectId = this.dataset.projectId;
+                const isChecked = this.checked;
 
+                fetch(`/Tasks/taskState/${taskId}`, {
+                    method: "POST"
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error("Failed to update task status");
+                    return response.json();
+                })
+                .then(data => {
+                    const taskCard = this.closest(".task-card");
+                    if (isChecked) {
+                        taskCard.querySelector("strong").classList.add("text-decoration-line-through", "text-muted");
+                    } else {
+                        taskCard.querySelector("strong").classList.remove("text-decoration-line-through", "text-muted");
+                    }
+                })
+                .catch(err => {
+                    console.error("Error updating task state:", err);
+                    alert("Failed to update task state. Please try again.");
+                    location.reload();
+                });
+            });
+        });
     document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".task-list").forEach(list => {
         new Sortable(list, {

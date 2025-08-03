@@ -122,20 +122,10 @@ namespace FlowForge.Core.Services
                 Project = projectMember.Project
             });
 
-            var AcceptedNotification = new Notification
-            {
-                NotificationId = Guid.NewGuid(),
-                SenderId = projectMember.Project.CreatedById,
-                ReceiverId = userId,
-                ProjectId = projectId,
-                Message = $"You have been joined to the project {projectMember.Project.ProjectTitle}.",
-                NotificationType = NotificationType.INFO,
-                Sender = projectMember.Project.CreatedBy,
-                Receiver = projectMember.Member,
-                Project = projectMember.Project
-            };
-            await _notificationService.SendNotification(AcceptedNotification);
-            await _notificationService.DeleteNotification(notification.NotificationId);
+            notification.NotificationType = NotificationType.INFO;
+            notification.Message = $"you have been successfully added to the project {projectMember.Project.ProjectTitle}";
+            await _notificationService.EditNotification(notification);
+
             return true;
         }
 
@@ -151,9 +141,9 @@ namespace FlowForge.Core.Services
                 throw new ArgumentException("Project member not found.");
             }
             await _projectMemberRepository.RejectProjectMember(projectMember);
-            var notification = (await _notificationService.GetNotifications(userId))?.FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == userId)?.NotificationId;
+            var notification = (await _notificationService.GetNotifications(userId))?.FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == userId);
 
-            await _notificationService.DeleteNotification(notification ?? Guid.Empty);
+
             await _notificationService.SendNotification(new Notification
             {
                 NotificationId = Guid.NewGuid(),
@@ -166,6 +156,10 @@ namespace FlowForge.Core.Services
                 Receiver = projectMember.Project.CreatedBy,
                 Project = projectMember.Project
             });
+
+            notification.NotificationType = NotificationType.INFO;
+            notification.Message = $"You have been reject to join the project {projectMember.Project.ProjectTitle}";
+            await _notificationService.EditNotification(notification);
             return true;
         }
     }

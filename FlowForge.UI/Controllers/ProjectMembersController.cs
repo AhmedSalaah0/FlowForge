@@ -8,12 +8,11 @@ namespace FlowForge.UI.Controllers
 {
     [Controller]
     [Route("[controller]")]
-    public class ProjectMembersController(UserManager<ApplicationUser> userManager, IProjectService projectService, IProjectMemberService projectMemberService, ITaskService taskService, INotificationService notificationService) : Controller
+    public class ProjectMembersController(UserManager<ApplicationUser> userManager, IProjectService projectService, IProjectMemberService projectMemberService, ITaskService taskService) : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager = userManager;
         private readonly IProjectService _projectService = projectService;
         private readonly IProjectMemberService _projectMemberService = projectMemberService;
-        private readonly INotificationService _notificationService = notificationService;
         private readonly ITaskService _taskService = taskService;
 
         [HttpGet]
@@ -133,27 +132,6 @@ namespace FlowForge.UI.Controllers
                 ModelState.AddModelError("", $"Error removing member: {ex.Message}");
 
                 return View("~/Views/Tasks/Tasks.cshtml", sections);
-            }
-        }
-
-        [HttpPost]
-        [Route("[action]")]
-        public async Task<IActionResult> AllNotificationsRead(Guid userId)
-        {
-            var user = await _userManager.FindByNameAsync(User.Identity.Name);
-            if (user == null)
-            {
-                return Unauthorized("User not found");
-            }
-            try
-            {
-                await _notificationService.MarkAllNotificationsAsRead(user.Id);
-                return RedirectToAction("Index", "Projects");
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError("", $"Error marking notifications as read: {ex.Message}");
-                return View();
             }
         }
     }

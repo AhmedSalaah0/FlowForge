@@ -5,6 +5,13 @@
     var grouped = Model.GroupBy(g => g.CreatedAt.Value.Date);
 }
 
+@if (!ViewData.ModelState.IsValid)
+{
+    foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+    {
+        <div class="alert alert-danger">@error.ErrorMessage</div>
+    }
+}
 <div class="container py-4">
     <div class="mb-4 border-bottom border-secondary pb-3">
         <h1 class="h3 text-light d-flex align-items-center gap-2">

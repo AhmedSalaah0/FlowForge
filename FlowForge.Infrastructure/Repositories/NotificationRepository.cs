@@ -48,6 +48,8 @@ namespace FlowForge.Infrastructure.Repositories
         {
             return await _context.Notifications
                 .Where(n => n.ReceiverId == userId)
+                .Include(n => n.Project)
+                    .ThenInclude(pm => pm.ProjectMembers)
                 .OrderByDescending(n => n.CreatedAt)
                 .ToListAsync();
         }
@@ -97,6 +99,13 @@ namespace FlowForge.Infrastructure.Repositories
             {
                 _logger.LogError(ex, "Error marking all notifications as read: {Message}", ex.Message);
             }
+        }
+
+        public async Task<Notification> EditNotification(Notification notification)
+        {
+            _context.Update(notification);
+            await _context.SaveChangesAsync();
+            return notification;
         }
     }
 }
