@@ -82,3 +82,7 @@ coverage/
 # Optional: exclude environment-specific configs
 appsettings.Development.json
 /FlowForge.UI/Properties/PublishProfiles
+/FlowForge.Infrastructure/Migrations/20250729124229_AddSectionWithNullable.cs
+/FlowForge.Infrastructure/Migrations/20250729124229_AddSectionWithNullable.Designer.cs
+/FlowForge.Infrastructure/Migrations/20250729211810_HandleCascade.cs
+/FlowForge.Infrastructure/Migrations/20250729211810_HandleCascade.Designer.cs
