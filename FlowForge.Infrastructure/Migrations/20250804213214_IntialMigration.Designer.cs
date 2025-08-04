@@ -9,11 +9,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace ToDoList.Infrastructure.Migrations
+namespace FlowForge.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250725200145_ChangeNaming")]
-    partial class ChangeNaming
+    [Migration("20250804213214_IntialMigration")]
+    partial class IntialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -98,7 +98,10 @@ namespace ToDoList.Infrastructure.Migrations
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("ProjectRole")
+                    b.Property<int>("MemberRole")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MembershipStatus")
                         .HasColumnType("int");
 
                     b.HasKey("MemberId", "ProjectId");
@@ -108,10 +111,40 @@ namespace ToDoList.Infrastructure.Migrations
                     b.ToTable("ProjectMembers");
                 });
 
+            modelBuilder.Entity("FlowForge.Core.Domain.Entities.ProjectSection", b =>
+                {
+                    b.Property<Guid>("SectionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SectionName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("SectionId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("ProjectSections", (string)null);
+                });
+
             modelBuilder.Entity("FlowForge.Core.Domain.Entities.ProjectTask", b =>
                 {
                     b.Property<Guid>("TaskId")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedById")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
@@ -120,29 +153,31 @@ namespace ToDoList.Infrastructure.Migrations
                     b.Property<bool>("IsRecurring")
                         .HasColumnType("bit");
 
-                    b.Property<Guid>("MemberId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("RecurringInterval")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("ScheduledDateTime")
+                    b.Property<DateTime?>("ScheduleDateTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("Success")
-                        .HasColumnType("bit");
+                    b.Property<Guid?>("SectionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<string>("Title")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("TaskId");
 
-                    b.HasIndex("MemberId");
+                    b.HasIndex("CreatedById");
 
                     b.HasIndex("ProjectId");
+
+                    b.HasIndex("SectionId");
 
                     b.ToTable("ProjectTasks", (string)null);
                 });
@@ -385,7 +420,7 @@ namespace ToDoList.Infrastructure.Migrations
             modelBuilder.Entity("FlowForge.Core.Domain.Entities.ProjectMember", b =>
                 {
                     b.HasOne("FlowForge.Core.Domain.IdentityEntities.ApplicationUser", "Member")
-                        .WithMany("UserGroups")
+                        .WithMany("ProjectMembers")
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -401,19 +436,47 @@ namespace ToDoList.Infrastructure.Migrations
                     b.Navigation("Project");
                 });
 
-            modelBuilder.Entity("FlowForge.Core.Domain.Entities.ProjectTask", b =>
+            modelBuilder.Entity("FlowForge.Core.Domain.Entities.ProjectSection", b =>
                 {
-                    b.HasOne("FlowForge.Core.Domain.IdentityEntities.ApplicationUser", null)
+                    b.HasOne("FlowForge.Core.Domain.IdentityEntities.ApplicationUser", "CreatedBy")
                         .WithMany()
-                        .HasForeignKey("MemberId")
+                        .HasForeignKey("CreatedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("FlowForge.Core.Domain.Entities.Project", null)
-                        .WithMany()
+                        .WithMany("Sections")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("CreatedBy");
+                });
+
+            modelBuilder.Entity("FlowForge.Core.Domain.Entities.ProjectTask", b =>
+                {
+                    b.HasOne("FlowForge.Core.Domain.IdentityEntities.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FlowForge.Core.Domain.Entities.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FlowForge.Core.Domain.Entities.ProjectSection", "Section")
+                        .WithMany("Tasks")
+                        .HasForeignKey("SectionId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("Section");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -470,11 +533,18 @@ namespace ToDoList.Infrastructure.Migrations
             modelBuilder.Entity("FlowForge.Core.Domain.Entities.Project", b =>
                 {
                     b.Navigation("ProjectMembers");
+
+                    b.Navigation("Sections");
+                });
+
+            modelBuilder.Entity("FlowForge.Core.Domain.Entities.ProjectSection", b =>
+                {
+                    b.Navigation("Tasks");
                 });
 
             modelBuilder.Entity("FlowForge.Core.Domain.IdentityEntities.ApplicationUser", b =>
                 {
-                    b.Navigation("UserGroups");
+                    b.Navigation("ProjectMembers");
                 });
 #pragma warning restore 612, 618
         }

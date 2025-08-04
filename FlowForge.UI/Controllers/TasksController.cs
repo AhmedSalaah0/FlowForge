@@ -20,7 +20,6 @@ namespace FlowForge.UI.Controllers
         private readonly UserManager<ApplicationUser> _userManager = userManager;
 
         [HttpGet]
-        [Route("projects/tasks")]
         public async Task<IActionResult> Tasks(Guid projectId)
         {
             var user = await _userManager.FindByEmailAsync(User.Identity.Name);
@@ -41,7 +40,7 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpGet]
-        [Route("projects/tasks/new")]
+        [Route("Create")]
         public IActionResult Task(Guid projectId, Guid sectionId)
         {
             ViewBag.projectId = projectId;
@@ -50,7 +49,7 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpPost]
-        [Route("projects/tasks/new")]
+        [Route("Create")]
         public async Task<IActionResult> Task(TaskAddRequest taskAddRequest)
         {
             if (!ModelState.IsValid)
@@ -143,7 +142,7 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpGet]
-        [Route("projects/tasks/delete")]
+        [Route("delete")]
         public async Task<IActionResult> DeleteTask(Guid projectId, Guid taskId)
         {
             var task = await _taskService.GetTaskById(projectId, taskId);
@@ -157,9 +156,8 @@ namespace FlowForge.UI.Controllers
                 return Unauthorized("User not found");
             }
 
-            var taskToDelete = task.ToTask();
-            taskToDelete.CreatedById = user.Id;
-            bool DeleteSuccess = await _taskService.DeleteTask(taskToDelete);
+            task.CreatedById = user.Id;
+            bool DeleteSuccess = await _taskService.DeleteTask(task);
             if (!DeleteSuccess)
             {
                 ModelState.AddModelError("Delete Task", "Task not found or could not be deleted");

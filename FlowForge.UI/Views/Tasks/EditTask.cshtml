@@ -33,8 +33,13 @@
                 </div>
 
                 <div class="form-check mb-4">
-                    <input asp-for="Status" class="form-check-input" />
-                    <label class="form-check-label text-light" asp-for="Status">
+                    <input type="checkbox"
+                           class="form-check-input"
+                           id="successCheckbox"
+                           name="Status"
+                           @(Model.Status == ProjectTaskStatus.COMPLETED ? "checked" : "")
+                           value="COMPLETED" />
+                    <label class="form-check-label text-light" for="successCheckbox">
                         Mark as completed
                     </label>
                 </div>

@@ -36,7 +36,11 @@
                 </div>
 
                 <div class="form-check mb-4">
-                    <input asp-for="Status" class="form-check-input" id="successCheckbox" />
+                    <input type="checkbox"
+                           class="form-check-input"
+                           id="successCheckbox"
+                           name="Status"
+                           value="COMPLETED" />
                     <label class="form-check-label text-light" for="successCheckbox">
                         Mark as completed
                     </label>

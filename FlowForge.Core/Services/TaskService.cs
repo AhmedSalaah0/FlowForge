@@ -95,7 +95,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
             return tasks.SelectMany(x => x).ToList();
     }
 
-    public async Task<bool> DeleteTask(ProjectTask task)
+    public async Task<bool> DeleteTask(TaskResponse task)
     {
         if (task is null)
         {
@@ -114,7 +114,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
             return false;
         }
 
-        await _taskRepository.DeleteTask(task);
+        await _taskRepository.DeleteTask(task.ToTask());
         return true;
     }
 

@@ -6,14 +6,11 @@ using FlowForge.Core.ServiceContracts;
 
 namespace FlowForge.Core.Services
 {
-    public class ProjectService : IProjectService
+    public class ProjectService(IProjectRepository context) : IProjectService
     {
-        private readonly IProjectRepository _context;
-        public ProjectService(IProjectRepository context)
-        {
-            _context = context;
-        }
-        public async Task<Project> CreateProject(ProjectAddRequest groupAddRequest, Guid userId)
+        private readonly IProjectRepository _context = context;
+
+        public async Task<ProjectResponse> CreateProject(ProjectAddRequest groupAddRequest, Guid userId)
         {
             ArgumentNullException.ThrowIfNull(groupAddRequest);
             groupAddRequest.CreatedAt = DateTime.Now;
@@ -28,16 +25,16 @@ namespace FlowForge.Core.Services
             };
             groupTasks.ProjectMembers.Add(UserGroup);
             var group = await _context.CreateProject(groupTasks);
-            return group;
+            return group.ToProjectResponse(userId);
         }
 
-        public async Task<List<Project>> GetProjects(Guid userId)
+        public async Task<List<ProjectResponse>> GetProjects(Guid userId)
         {
             List<Project>? projects = await _context.GetProjects(userId);
-            return projects;
+            return [.. projects.Select(p => p.ToProjectResponse(userId))];
         }
 
-        public async Task<Project> GetProjectById(Guid userId, Guid? projectId)
+        public async Task<ProjectResponse> GetProjectById(Guid userId, Guid? projectId)
         {
             if (projectId == null)
             {
@@ -54,7 +51,7 @@ namespace FlowForge.Core.Services
                 throw new UnauthorizedAccessException("You are not a member of this project.");
             }
 
-            return project;
+            return project.ToProjectResponse(userId);
         }
         public async Task<ProjectResponse> UpdateProject(Guid? projectId, ProjectUpdateRequest projectUpdateRequest)
         {

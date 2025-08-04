@@ -78,7 +78,7 @@ namespace FlowForge.UI.Controllers
             {
                 return BadRequest();
             }
-            return View("EditProject",project);
+            return View("EditProject", project);
         }
 
         [HttpPost]

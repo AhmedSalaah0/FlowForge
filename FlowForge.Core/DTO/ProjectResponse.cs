@@ -13,6 +13,7 @@ namespace FlowForge.Core.DTO
         public ApplicationUser CreatedBy { get; set; }
         public string SelectedColor { get; set; }
         public DateTime? CreatedAt { get; set; }
+        public ICollection<ProjectMember>? ProjectMembers { get; set; } = [];
         public ProjectRole? UserRole { get; set; }
     }
 }
@@ -26,6 +27,7 @@ public static class ProjectExtensions
             ProjectId = project.ProjectId,
             ProjectTitle = project.ProjectTitle,
             SelectedColor = project.SelectedColor,
+            ProjectMembers = project.ProjectMembers,
             CreatedAt = project.CreatedAt,
             UserRole = role ?? ProjectRole.Member
         };

@@ -11,6 +11,7 @@ public class TaskResponse
     public DateTime? ScheduleDateTime { get; set; }
     public bool IsRecurring { get; set; } = false;
     public int RecurringInterval { get; set; } = 0;
+    public Guid CreatedById { get; set; }
     public Guid? SectionId { get; set; }
     public string SectionName { get; set; } = "General";
     public Guid ProjectId { get; set; }
@@ -24,6 +25,8 @@ public class TaskResponse
             && Title == taskResponse.Title
             && Description == taskResponse.Description
             && ScheduleDateTime == taskResponse.ScheduleDateTime
+            && CreatedById == taskResponse.CreatedById
+            && SectionId == taskResponse.SectionId
             && IsRecurring == taskResponse.IsRecurring
             && RecurringInterval == taskResponse.RecurringInterval
             && ProjectId == taskResponse.ProjectId
@@ -50,6 +53,7 @@ public class TaskResponse
             ScheduleDateTime = ScheduleDateTime,
             IsRecurring = IsRecurring,
             RecurringInterval = RecurringInterval,
+            CreatedById = CreatedById,
             ProjectId = ProjectId,
             SectionId = SectionId,
             Status = Status
@@ -69,6 +73,7 @@ public static class TaskExtensions
             ScheduleDateTime = task.ScheduleDateTime,
             IsRecurring = task.IsRecurring,
             RecurringInterval = task.RecurringInterval,
+            CreatedById = task.CreatedById,
             ProjectId = task.ProjectId,
             SectionId = task.SectionId,
             Status = task.Status

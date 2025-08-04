@@ -1,5 +1,5 @@
 @using FlowForge.Core.Domain.Entities
-@model IEnumerable<Project>
+@model IEnumerable<ProjectResponse>
 @{
     ViewBag.Title = "Home";
     var grouped = Model.GroupBy(g => g.CreatedAt.Value.Date);
