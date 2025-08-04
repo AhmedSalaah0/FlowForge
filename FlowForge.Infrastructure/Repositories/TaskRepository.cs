@@ -1,5 +1,6 @@
 using FlowForge.Core.Domain.Entities;
 using FlowForge.Core.Domain.RepositoryContract;
+using FlowForge.Core.Enums;
 using FlowForge.Infrastructure.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,7 +17,7 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
 
     public async Task<IEnumerable<ProjectTask>> GetCompletedTasks()
     {
-        return await _context.Tasks.Where(temp => temp.Success).ToListAsync();
+        return await _context.Tasks.Where(temp => temp.Status == ProjectTaskStatus.COMPLETED).ToListAsync();
     }
 
     public Task<ProjectTask?> GetTaskById(Guid groupId, Guid taskId)
@@ -44,14 +45,14 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
         return true;
     }
 
-    public async Task<bool> CheckAsCompleted(Guid? taskId)
+    public async Task<bool> UpdateTaskStatus(Guid? taskId, ProjectTaskStatus status)
     {
         var task = await _context.Tasks.FirstOrDefaultAsync(temp => temp.TaskId == taskId);
         if (task is null)
         {
             return false;
         }
-        task.Success = !task.Success;
+        task.Status = status;
         await _context.SaveChangesAsync();
         return true;
     }

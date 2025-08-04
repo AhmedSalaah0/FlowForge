@@ -82,13 +82,13 @@
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="taskCheck"
+                                    data-status="@task.Status.ToString().ToLower()"
                                     data-task-id="@task.TaskId"
-                                    data-project-id="@task.ProjectId"
-                                    @(task.Success ? "checked" : "") />
+                                    @(task.Status == ProjectTaskStatus.COMPLETED ? "checked" : "") />
                             </div>
 
                             <div class="ms-2 flex-grow-1">
-                                <strong class="@(task.Success ? "text-decoration-line-through text-muted" : "")">
+                                <strong style="color:@(task.Status == ProjectTaskStatus.COMPLETED ? "#979494d1" : "")" class="@(task.Status == ProjectTaskStatus.COMPLETED ? "text-decoration-line-through" : "") ">
                                     @task.Title
                                 </strong>
 
@@ -118,10 +118,42 @@
                                 </a>
                             </div>
                         </div>
+                        <div class="dropdown mt-2">
+                                <button id="selectedStatus" class="btn btn-sm d-flex align-items-center gap-2 px-2 py-1 rounded-2 border border-secondary text-light"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false"
+                                        data-status="@task.Status.ToString().ToLower()"
+                                        style="font-size: 0.8rem;">
+                                    <span class="status-dot"
+                                          style="width: 10px; height: 10px; border-radius: 50%;
+                         background-color:@(task.Status == ProjectTaskStatus.PENDING ? "#ffc107" : task.Status == ProjectTaskStatus.IN_PROGRESS ? "#0d6efd" : task.Status == ProjectTaskStatus.COMPLETED ? "#198754" : "#6c757d");
+                 display: inline-block;"></span>
+                            <span>@task.Status.ToString().Replace("_", " ").ToUpperInvariant()</span>
+                            <i class="fas fa-chevron-down ms-1 small"></i>
+                        </button>
+
+                                <ul class="dropdown-menu dropdown-menu-dark shadow-sm">
+                                    @foreach (var status in Enum.GetValues(typeof(ProjectTaskStatus)).Cast<ProjectTaskStatus>())
+                                    {
+                                        <li>
+                                            <button type="button"
+                                                    class="dropdown-item d-flex align-items-center gap-2 status-option"
+                                                    data-task-id="@task.TaskId"
+                                                    data-status="@(status)">
+                                                <span class="status-dot" style="width: 10px; height: 10px; border-radius: 50%; background-color:
+                                    @(status == ProjectTaskStatus.PENDING ? "#ffc107" : status == ProjectTaskStatus.IN_PROGRESS ? "#0d6efd" : status == ProjectTaskStatus.COMPLETED ? "#198754" : "#6c757d");
+                        display: inline-block;"></span>
+                                    @status.ToString().Replace("_", " ").ToUpperInvariant()
+                                </button>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+
                     </div>
                 }
                 </div>
-
 
                 <a asp-controller="Tasks" asp-action="Task"
                    asp-route-projectId="@projectId"
@@ -150,36 +182,109 @@
 
 @section Scripts {
     <script>
-            document.querySelectorAll(".form-check-input").forEach(checkbox => {
-            checkbox.addEventListener("change", function() {
-                const taskId = this.dataset.taskId;
-                const projectId = this.dataset.projectId;
-                const isChecked = this.checked;
+        document.addEventListener("DOMContentLoaded", function () {
+                document.querySelectorAll(".task-card").forEach(textCard => {
+                    const checkbox = textCard.querySelector(".form-check-input");
+                    const dropdownBtn = textCard.querySelector("#selectedStatus");
+                    const spans = dropdownBtn.querySelectorAll("span");
+                    const dotSpan = spans[0];
+                    const textSpan = spans[1];
+                    const text = textCard.querySelector("strong");
+                    const taskId = checkbox.dataset.taskId;
 
-                fetch(`/Tasks/taskState/${taskId}`, {
-                    method: "POST"
+                    checkbox.addEventListener("change", function() {
+                    const newStatus = checkbox.checked ? "completed" : "pending";
+
+                fetch(`/Tasks/taskState`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ 
+                            taskId: taskId,
+                            status: newStatus
+                    })
                 })
                 .then(response => {
                     if (!response.ok) throw new Error("Failed to update task status");
                     return response.json();
                 })
                 .then(data => {
-                    const taskCard = this.closest(".task-card");
-                    if (isChecked) {
-                        taskCard.querySelector("strong").classList.add("text-decoration-line-through", "text-muted");
+                    if (newStatus === "completed") {
+                        text.classList.add("text-decoration-line-through");
+                        text.style.color = "#979494d1";
+                        dotSpan.style.backgroundColor = "#198754";
+                            textSpan.textContent = "COMPLETED";
                     } else {
-                        taskCard.querySelector("strong").classList.remove("text-decoration-line-through", "text-muted");
+                        textCard.querySelector("strong").classList.remove("text-decoration-line-through");
+                        text.style.color = "#ffffff";
+                         dotSpan.style.backgroundColor = "#ffc107";
+                            textSpan.textContent = "PENDING";
                     }
+                            dropdownBtn.dataset.status = newStatus;
                 })
                 .catch(err => {
-                    console.error("Error updating task state:", err);
-                    alert("Failed to update task state. Please try again.");
+                    console.error("Error updating task state: ", err.message);
                     location.reload();
                 });
             });
+
+            document.querySelectorAll('.status-option').forEach(button => {
+                    button.addEventListener('click', function () {
+                        const taskId = this.dataset.taskId;
+                        const newStatus = this.dataset.status;
+                        const taskCard = this.closest('.task-card');
+                        const checkbox = taskCard.querySelector(".form-check-input");
+                        const text = taskCard.querySelector("strong");
+                        const dropdownBtn = taskCard.querySelector("#selectedStatus");
+                        const spans = dropdownBtn.querySelectorAll("span");
+                        const dotSpan = spans[0];
+                        const textSpan = spans[1];
+
+                            fetch('/Tasks/taskState', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            },
+                            body: JSON.stringify({
+                                taskId: taskId,
+                                status: newStatus
+                            })
+                        })
+                        .then(response => {
+                            if (response.ok) {
+                                if (newStatus === "COMPLETED") {
+                                    text.classList.add("text-decoration-line-through");
+                                    text.style.color = "#979494d1";
+                                    dotSpan.style.backgroundColor = "#198754";
+                                    textSpan.textContent = "COMPLETED";
+                                    checkbox.checked = true;
+                                } else if (newStatus == "PENDING") {
+                                     dotSpan.style.backgroundColor = "#ffc107";
+                                     textSpan.textContent = "PENDING";
+                                     textCard.querySelector("strong").classList.remove("text-decoration-line-through");
+                                     text.style.color = "#ffffff";
+                                        checkbox.checked = false;
+                                }
+                                else {
+                                     textSpan.textContent = "INPROGRESS";
+                                     dotSpan.style.backgroundColor = "#0d6efd";
+                                     textCard.querySelector("strong").classList.remove("text-decoration-line-through");
+                                     dotSpan.style.backgroundColor = "#0d6efd";
+                                     text.style.color = "#ffffff";
+                                     checkbox.checked = false;
+                                }
+                                // location.reload();
+                            } else {
+                                alert("Failed to update task status.");
+                            }
+                        });
+                    });
+                });
         });
-    document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll(".task-list").forEach(list => {
+
+                document.querySelectorAll(".task-list").forEach(list => {
         new Sortable(list, {
             group: "tasks",
             animation: 100,
@@ -242,7 +347,6 @@
             }
         });
     });
-});
+            });
     </script>
-
 }

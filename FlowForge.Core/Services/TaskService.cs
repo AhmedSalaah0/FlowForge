@@ -118,11 +118,14 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         return true;
     }
 
-    public async Task<bool> CheckAsCompleted(Guid? taskId)
+    public async Task<bool> UpdateTaskStatus(TaskUpdateStatus taskUpdateStatus)
     {
-        if (taskId is null) return false;
+        if (taskUpdateStatus == null || !Enum.TryParse<ProjectTaskStatus>(taskUpdateStatus.Status, true, out var statusEnum))
+        {
+            return false;
+        }
 
-        var State = await _taskRepository.CheckAsCompleted(taskId);
+        var State = await _taskRepository.UpdateTaskStatus(taskUpdateStatus.TaskId, statusEnum);
         return State;
     }
     

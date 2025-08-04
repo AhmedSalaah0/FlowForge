@@ -1,4 +1,5 @@
 using FlowForge.Core.Domain.IdentityEntities;
+using FlowForge.Core.Enums;
 
 namespace FlowForge.Core.Domain.Entities
 {
@@ -7,7 +8,6 @@ namespace FlowForge.Core.Domain.Entities
         public Guid TaskId { get; set; }
         public string? Title { get; set; }
         public string? Description { get; set; }
-        public bool Success { get; set; } = false;
         public Guid ProjectId { get; set; }
         public Project? Project { get; set; }
         public Guid? SectionId { get; set; }
@@ -17,5 +17,7 @@ namespace FlowForge.Core.Domain.Entities
         public DateTime? ScheduleDateTime { get; set; }
         public bool IsRecurring { get; set; } = false;
         public int RecurringInterval { get; set; } = 0;
+        public ProjectTaskStatus Status { get; set; } = ProjectTaskStatus.PENDING;
+        public DateTime? CreatedAt { get; set; } = DateTime.Now;
     }
 }

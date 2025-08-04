@@ -1,10 +1,12 @@
 using FlowForge.Core.Domain.IdentityEntities;
 using FlowForge.Core.DTO;
+using FlowForge.Core.Enums;
 using FlowForge.Core.ServiceContracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace FlowForge.UI.Controllers
 {
@@ -171,7 +173,7 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpGet]
-        [Route("projects/tasks/Edit")]
+        [Route("EditTask")]
         public async Task<IActionResult> EditTask(Guid projectId, Guid taskId)
         {
             var task = await _taskService.GetTaskById(projectId, taskId);
@@ -183,7 +185,7 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpPost]
-        [Route("projects/tasks/Edit")]
+        [Route("EditTask")]
         public async Task<IActionResult> EditTask(TaskUpdateRequest taskUpdateRequest)
         {
             if (!ModelState.IsValid)
@@ -213,22 +215,22 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpPost]
-        [Route("taskState/{taskId}")]
-        public async Task<IActionResult> State(Guid taskId)
+        [Route("taskState")]
+        public async Task<IActionResult> UpdateTaskStatus([FromBody] TaskUpdateStatus taskUpdateStatus)
         {
-            if (taskId == Guid.Empty)
+            if (taskUpdateStatus is null)
             {
                 return BadRequest("Invalid request");
             }
 
-            bool updated = await _taskService.CheckAsCompleted(taskId);
+            bool updated = await _taskService.UpdateTaskStatus(taskUpdateStatus);
 
             if (!updated)
             {
                 return BadRequest("Task not found or could not be updated");
             }
 
-            return Ok(new { success = true, taskId });
+            return Ok(new { success = true, taskUpdateStatus.TaskId });
         }
 
         [HttpPost]

@@ -1,5 +1,6 @@
 using FlowForge.Core.Domain.Entities;
 using FlowForge.Core.DTO;
+using FlowForge.Core.Enums;
 
 namespace FlowForge.Core.Domain.RepositoryContract;
 
@@ -11,6 +12,6 @@ public interface ITaskRepository
     Task<ProjectTask?> UpdateTask(ProjectTask task);
     Task<IEnumerable<ProjectTask>> GetCompletedTasks();
     Task<bool> DeleteTask(ProjectTask task);
-    Task<bool> CheckAsCompleted(Guid? taskId);
+    Task<bool> UpdateTaskStatus(Guid? taskId, ProjectTaskStatus status);
     Task<bool> MoveTask(ProjectTask task, Guid NewSectionId);
 }
