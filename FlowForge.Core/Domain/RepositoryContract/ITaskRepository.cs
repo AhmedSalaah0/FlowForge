@@ -14,4 +14,5 @@ public interface ITaskRepository
     Task<bool> DeleteTask(ProjectTask task);
     Task<bool> UpdateTaskStatus(Guid? taskId, ProjectTaskStatus status);
     Task<bool> MoveTask(ProjectTask task, Guid NewSectionId);
+    Task<ProjectTask> AssignTask(ProjectTask task, Guid MemberId);
 }

@@ -77,35 +77,35 @@
                 <div class="task-list" id="section-@s.SectionId" data-section-id="@s.SectionId" data-project-id="@s.ProjectId">
                 @foreach (var task in s.Tasks)
                 {
-                    <div class="task-card mb-3 p-3 rounded-3 shadow-sm d-flex flex-column gap-2 position-relative" data-task-id="@task.TaskId">
-
+                    <div class="task-card mb-3 p-3 rounded-3 shadow-sm bg-dark text-light position-relative" data-task-id="@task.TaskId">
                         <div class="d-flex justify-content-between align-items-start">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="taskCheck"
-                                    data-status="@task.Status.ToString().ToLower()"
-                                    data-task-id="@task.TaskId"
-                                    @(task.Status == ProjectTaskStatus.COMPLETED ? "checked" : "") />
+                            <div class="form-check mt-1">
+                                <input class="form-check-input" type="checkbox"
+                                       id="taskCheck_@task.TaskId"
+                                       data-status="@task.Status.ToString().ToLower()"
+                                       data-task-id="@task.TaskId"
+                                       @(task.Status == ProjectTaskStatus.Completed ? "checked" : "") />
                             </div>
 
                             <div class="ms-2 flex-grow-1">
-                                <strong style="color:@(task.Status == ProjectTaskStatus.COMPLETED ? "#979494d1" : "")" class="@(task.Status == ProjectTaskStatus.COMPLETED ? "text-decoration-line-through" : "") ">
+                                <div class="fw-semibold @(task.Status == ProjectTaskStatus.Completed ? "text-decoration-line-through text-secondary" : "")">
                                     @task.Title
-                                </strong>
+                                </div>
 
                                 @if (!string.IsNullOrWhiteSpace(task.Description))
                                 {
-                                    <div class="text-light small">@task.Description</div>
+                                    <div class="small text-muted">@task.Description</div>
                                 }
 
                                 @if (task.ScheduleDateTime.HasValue)
                                 {
-                                    <div class="small text-warning">
+                                    <div class="small text-warning mt-1">
                                         <i class="fas fa-clock me-1"></i>@task.ScheduleDateTime?.ToString("dd MMM yyyy hh:mm tt")
                                     </div>
                                 }
                             </div>
 
-                            <div class="btn-group btn-group-sm">
+                            <div class="btn-group btn-group-sm ms-2">
                                 <a asp-controller="Tasks" asp-action="EditTask"
                                    asp-route-projectId="@task.ProjectId" asp-route-taskId="@task.TaskId"
                                    class="btn btn-outline-primary" title="Edit Task">
@@ -118,7 +118,10 @@
                                 </a>
                             </div>
                         </div>
-                        <div class="dropdown mt-2">
+
+                        <div class="d-flex gap-2 mt-3">
+
+                            <div class="dropdown">
                                 <button id="selectedStatus" class="btn btn-sm d-flex align-items-center gap-2 px-2 py-1 rounded-2 border border-secondary text-light"
                                         type="button"
                                         data-bs-toggle="dropdown"
@@ -126,31 +129,62 @@
                                         data-status="@task.Status.ToString().ToLower()"
                                         style="font-size: 0.8rem;">
                                     <span class="status-dot"
-                                          style="width: 10px; height: 10px; border-radius: 50%;
-                         background-color:@(task.Status == ProjectTaskStatus.PENDING ? "#ffc107" : task.Status == ProjectTaskStatus.IN_PROGRESS ? "#0d6efd" : task.Status == ProjectTaskStatus.COMPLETED ? "#198754" : "#6c757d");
-                 display: inline-block;"></span>
-                            <span>@task.Status.ToString().Replace("_", " ").ToUpperInvariant()</span>
-                            <i class="fas fa-chevron-down ms-1 small"></i>
-                        </button>
+                                          style="width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+                                          background-color:@(task.Status == ProjectTaskStatus.Pending ? "#ffc107" :
+                                                            task.Status == ProjectTaskStatus.In_Progress ? "#0d6efd" :
+                                                            task.Status == ProjectTaskStatus.Completed ? "#198754" : "#6c757d");">
+                                    </span>
+                                    <span class="fw-semibold">@task.Status.ToString().Replace("_", " ")</span>
+                                    <i class="fas fa-chevron-down ms-1 small"></i>
+                                </button>
 
                                 <ul class="dropdown-menu dropdown-menu-dark shadow-sm">
                                     @foreach (var status in Enum.GetValues(typeof(ProjectTaskStatus)).Cast<ProjectTaskStatus>())
                                     {
                                         <li>
                                             <button type="button"
-                                                    class="dropdown-item d-flex align-items-center gap-2 status-option"
+                                                    class="dropdown-item d-flex align-items-center gap-2 status-option @(status == task.Status ? "active" : "")"
                                                     data-task-id="@task.TaskId"
-                                                    data-status="@(status)">
-                                                <span class="status-dot" style="width: 10px; height: 10px; border-radius: 50%; background-color:
-                                    @(status == ProjectTaskStatus.PENDING ? "#ffc107" : status == ProjectTaskStatus.IN_PROGRESS ? "#0d6efd" : status == ProjectTaskStatus.COMPLETED ? "#198754" : "#6c757d");
-                        display: inline-block;"></span>
-                                    @status.ToString().Replace("_", " ").ToUpperInvariant()
-                                </button>
+                                                    data-status="@status">
+                                                <span class="status-dot" style="width: 10px; height: 10px; border-radius: 50%;
+                                                      background-color:@(status == ProjectTaskStatus.Pending ? "#ffc107" :
+                                                                        status == ProjectTaskStatus.In_Progress ? "#0d6efd" :
+                                                                        status == ProjectTaskStatus.Completed ? "#198754" : "#6c757d");">
+                                                </span>
+                                                @status.ToString().Replace("_", " ")
+                                            </button>
                                         </li>
                                     }
                                 </ul>
                             </div>
 
+                            <div class="dropdown">
+                                <button id="Assignee" class="btn btn-sm d-flex align-items-center gap-2 px-2 py-1 rounded-2 border border-secondary text-light"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false"
+                                        style="font-size: 0.8rem;">
+                                    <span id="Assignee-span">@(task.Assignee?.Member.PersonName ?? "Unassigned")</span>
+                                    <i class="fas fa-user ms-1 small" aria-hidden="true"></i>
+                                </button>
+
+                                <ul class="dropdown-menu dropdown-menu-dark shadow-sm">
+                                    @foreach (var person in task.Project.ProjectMembers)
+                                    {
+                                        <li>
+                                            <button type="button"
+                                                    class="dropdown-item d-flex align-items-center gap-2 assignee-option @(task.Assignee?.MemberId == person.MemberId ? "active" : "")"
+                                                    data-task-id="@task.TaskId"
+                                                    data-project-id = "@task.ProjectId"
+                                                    data-assignee-id="@person.MemberId"
+                                                     id="assignee-name">
+                                                @person.Member.PersonName
+                                            </button>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 }
                 </div>
@@ -183,17 +217,17 @@
 @section Scripts {
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-                document.querySelectorAll(".task-card").forEach(textCard => {
-                    const checkbox = textCard.querySelector(".form-check-input");
-                    const dropdownBtn = textCard.querySelector("#selectedStatus");
+                document.querySelectorAll(".task-card").forEach(taxtCard => {
+                    const checkbox = taxtCard.querySelector(".form-check-input");
+                    const dropdownBtn = taxtCard.querySelector("#selectedStatus");
                     const spans = dropdownBtn.querySelectorAll("span");
                     const dotSpan = spans[0];
                     const textSpan = spans[1];
-                    const text = textCard.querySelector("strong");
+                    const text = taxtCard.querySelector(".fw-semibold");
                     const taskId = checkbox.dataset.taskId;
 
                     checkbox.addEventListener("change", function() {
-                    const newStatus = checkbox.checked ? "completed" : "pending";
+                    const newStatus = checkbox.checked ? "Completed" : "Pending";
 
                 fetch(`/Tasks/taskState`, {
                     method: "POST",
@@ -210,18 +244,17 @@
                     return response.json();
                 })
                 .then(data => {
-                    if (newStatus === "completed") {
+                    textSpan.textContent = newStatus;
+                    dropdownBtn.dataset.status = newStatus;
+                    if (newStatus === "Completed") {
                         text.classList.add("text-decoration-line-through");
                         text.style.color = "#979494d1";
                         dotSpan.style.backgroundColor = "#198754";
-                            textSpan.textContent = "COMPLETED";
                     } else {
-                        textCard.querySelector("strong").classList.remove("text-decoration-line-through");
+                        text.classList.remove("text-decoration-line-through");
                         text.style.color = "#ffffff";
                          dotSpan.style.backgroundColor = "#ffc107";
-                            textSpan.textContent = "PENDING";
                     }
-                            dropdownBtn.dataset.status = newStatus;
                 })
                 .catch(err => {
                     console.error("Error updating task state: ", err.message);
@@ -235,7 +268,7 @@
                         const newStatus = this.dataset.status;
                         const taskCard = this.closest('.task-card');
                         const checkbox = taskCard.querySelector(".form-check-input");
-                        const text = taskCard.querySelector("strong");
+                        const text = taskCard.querySelector(".fw-semibold");
                         const dropdownBtn = taskCard.querySelector("#selectedStatus");
                         const spans = dropdownBtn.querySelectorAll("span");
                         const dotSpan = spans[0];
@@ -254,23 +287,23 @@
                         })
                         .then(response => {
                             if (response.ok) {
-                                if (newStatus === "COMPLETED") {
+                                if (newStatus === "Completed") {
                                     text.classList.add("text-decoration-line-through");
                                     text.style.color = "#979494d1";
                                     dotSpan.style.backgroundColor = "#198754";
-                                    textSpan.textContent = "COMPLETED";
+                                    textSpan.textContent = "Completed";
                                     checkbox.checked = true;
-                                } else if (newStatus == "PENDING") {
+                                } else if (newStatus == "Pending") {
                                      dotSpan.style.backgroundColor = "#ffc107";
-                                     textSpan.textContent = "PENDING";
-                                     textCard.querySelector("strong").classList.remove("text-decoration-line-through");
+                                     textSpan.textContent = "Pending";
+                                     text.classList.remove("text-decoration-line-through");
                                      text.style.color = "#ffffff";
                                         checkbox.checked = false;
                                 }
                                 else {
-                                     textSpan.textContent = "INPROGRESS";
+                                     textSpan.textContent = "In Progress";
                                      dotSpan.style.backgroundColor = "#0d6efd";
-                                     textCard.querySelector("strong").classList.remove("text-decoration-line-through");
+                                     text.classList.remove("text-decoration-line-through");
                                      dotSpan.style.backgroundColor = "#0d6efd";
                                      text.style.color = "#ffffff";
                                      checkbox.checked = false;
@@ -281,9 +314,38 @@
                         });
                     });
                 });
+
+                document.querySelectorAll('.assignee-option').forEach(button => {
+                    button.addEventListener('click', function () {
+                        const taskId = this.dataset.taskId;
+                        const projectId = this.dataset.projectId;
+                        const assigneeId = this.dataset.assigneeId;
+                        const taskCard = this.closest('.task-card');
+                        const assigneeSpan = taskCard.querySelector("#Assignee-span");
+                        fetch('/Tasks/Assign', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            },
+                            body: JSON.stringify({
+                                taskId: taskId,
+                                projectId: projectId,
+                                memberId: assigneeId
+                            })
+                        })
+                        .then(response => {
+                            if (response.ok) {
+                                assigneeSpan.textContent = this.textContent.trim();
+                            } else {
+                                alert("Failed to assign task.");
+                            }
+                        });
+                    });
+                });
         });
 
-                document.querySelectorAll(".task-list").forEach(list => {
+        document.querySelectorAll(".task-list").forEach(list => {
         new Sortable(list, {
             group: "tasks",
             animation: 100,

@@ -15,5 +15,6 @@ namespace FlowForge.Core.ServiceContracts
         Task<bool> ScheduleTask(ScheduleTaskRequest request);
         Task<bool> UnScheduleTask(Guid taskId, Guid projectId, Guid userId);
         Task MoveTask(Guid userId, MoveTaskRequest request);
+        Task<TaskResponse> AssignTask(AssignTaskRequest assignTask); 
     }
 }

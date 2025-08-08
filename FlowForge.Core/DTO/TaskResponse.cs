@@ -1,4 +1,5 @@
 ﻿using FlowForge.Core.Domain.Entities;
+using FlowForge.Core.Domain.IdentityEntities;
 using FlowForge.Core.Enums;
 
 namespace FlowForge.Core.DTO;
@@ -15,6 +16,7 @@ public class TaskResponse
     public Guid? SectionId { get; set; }
     public string SectionName { get; set; } = "General";
     public Guid ProjectId { get; set; }
+    public ProjectMember Assignee { get; set; }
     public ProjectTaskStatus Status { get; set; }
     public override bool Equals(object? obj)
     {
@@ -30,7 +32,8 @@ public class TaskResponse
             && IsRecurring == taskResponse.IsRecurring
             && RecurringInterval == taskResponse.RecurringInterval
             && ProjectId == taskResponse.ProjectId
-            && Status == taskResponse.Status;
+            && Status == taskResponse.Status
+            && Assignee == taskResponse.Assignee;
     }
 
     public override int GetHashCode()
@@ -56,7 +59,8 @@ public class TaskResponse
             CreatedById = CreatedById,
             ProjectId = ProjectId,
             SectionId = SectionId,
-            Status = Status
+            Status = Status,
+            Assignee = Assignee
         };
     }
 }
@@ -76,7 +80,8 @@ public static class TaskExtensions
             CreatedById = task.CreatedById,
             ProjectId = task.ProjectId,
             SectionId = task.SectionId,
-            Status = task.Status
+            Status = task.Status,
+            Assignee = task.Assignee
         };
     }
 }

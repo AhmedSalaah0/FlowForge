@@ -17,7 +17,9 @@ namespace FlowForge.Core.Domain.Entities
         public DateTime? ScheduleDateTime { get; set; }
         public bool IsRecurring { get; set; } = false;
         public int RecurringInterval { get; set; } = 0;
-        public ProjectTaskStatus Status { get; set; } = ProjectTaskStatus.PENDING;
+        public ProjectTaskStatus Status { get; set; } = ProjectTaskStatus.Pending;
         public DateTime? CreatedAt { get; set; } = DateTime.Now;
+        public Guid? AssigneeId { get; set; }
+        public ProjectMember? Assignee { get; set; }
     }
 }

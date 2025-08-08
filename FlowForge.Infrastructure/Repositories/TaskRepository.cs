@@ -17,17 +17,13 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
 
     public async Task<IEnumerable<ProjectTask>> GetCompletedTasks()
     {
-        return await _context.Tasks.Where(temp => temp.Status == ProjectTaskStatus.COMPLETED).ToListAsync();
+        return await _context.Tasks.Where(temp => temp.Status == ProjectTaskStatus.Completed).ToListAsync();
     }
-
-    public Task<ProjectTask?> GetTaskById(Guid groupId, Guid taskId)
-    {
-        return _context.Tasks.FirstOrDefaultAsync(temp => temp.TaskId == taskId && temp.ProjectId == groupId);
-    }
-
     public Task<ProjectTask?> GetTaskById(Guid? groupId, Guid? taskId)
     {
-        return _context.Tasks.FirstOrDefaultAsync(temp => temp.TaskId == taskId && temp.ProjectId == groupId);
+        return _context.Tasks
+            .Include(temp => temp.Assignee)
+            .FirstOrDefaultAsync(temp => temp.TaskId == taskId && temp.ProjectId == groupId);
     }
 
     public async Task<List<ProjectSection>> GetTasks(Guid userId, Guid groupId)
@@ -35,6 +31,7 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
         return await _context.Sections
             .Where(section => section.ProjectId == groupId)
             .Include(section => section.Tasks)
+                .ThenInclude(task => task.Assignee)
             .ToListAsync();
     }
 
@@ -75,5 +72,12 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
         task.SectionId = NewSectionId;
         int num = await _context.SaveChangesAsync();
         return num > 0;
+    }
+
+    public Task<ProjectTask> AssignTask(ProjectTask task, Guid MemberId)
+    {
+        task.AssigneeId = MemberId;
+        _context.Entry(task).State = EntityState.Modified;
+        return _context.SaveChangesAsync().ContinueWith(_ => task);
     }
 }

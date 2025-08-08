@@ -17,6 +17,7 @@ namespace FlowForge.UI.Controllers
     {
         private readonly IProjectService _projectService = projectService;
         private readonly ITaskService _taskService = taskService;
+        private readonly IProjectMemberService _projectMemberService = projectMemberService;
         private readonly UserManager<ApplicationUser> _userManager = userManager;
 
         [HttpGet]
@@ -77,7 +78,7 @@ namespace FlowForge.UI.Controllers
             {
                 ModelState.AddModelError("", "Task not found");
             }
-            
+
             var scheduleRequest = new ScheduleTaskRequest
             {
                 TaskId = taskId,
@@ -85,10 +86,10 @@ namespace FlowForge.UI.Controllers
                 ScheduleDate = DateOnly.FromDateTime(DateTime.Today),
                 ScheduleTime = TimeOnly.FromDateTime(DateTime.Now.AddHours(1))
             };
-            
+
             return View(scheduleRequest);
         }
-        
+
         [HttpPost]
         [Route("ScheduleTask")]
         public async Task<IActionResult> ScheduleTask(ScheduleTaskRequest request)
@@ -107,15 +108,15 @@ namespace FlowForge.UI.Controllers
             request.MemberId = user.Id;
 
             bool scheduled = await _taskService.ScheduleTask(request);
-            
+
             if (!scheduled)
             {
                 ModelState.AddModelError("", "Failed to schedule the task. Please try again.");
                 return View(request);
             }
-            
+
             TempData["SuccessMessage"] = "Task scheduled successfully!";
-            
+
             return RedirectToAction("Tasks", new { projectId = request.ProjectId });
         }
 
@@ -129,15 +130,15 @@ namespace FlowForge.UI.Controllers
                 return Unauthorized("User not found");
             }
             bool unscheduled = await _taskService.UnScheduleTask(taskId, projectId, user.Id);
-            
+
             if (!unscheduled)
             {
                 ModelState.AddModelError("", "Failed to unschedule the task. Please try again.");
                 return View("Tasks", await _taskService.GetAllProjectTasks(user.Id, projectId));
             }
-            
+
             TempData["SuccessMessage"] = "Task unscheduled successfully!";
-            
+
             return RedirectToAction("Tasks", new { projectId });
         }
 
@@ -246,6 +247,25 @@ namespace FlowForge.UI.Controllers
 
             await _taskService.MoveTask(user.Id, request);
             return Ok();
+        }
+
+        [HttpPost]
+        [Route("Assign")]
+        public async Task<IActionResult> AssignTask([FromBody] AssignTaskRequest assignRequest)
+        {
+            var user = await _userManager.FindByEmailAsync(User.Identity.Name);
+            if (user == null)
+            {
+                return Unauthorized("User not found");
+            }
+            var task = await _taskService.GetTaskById(assignRequest.projectId, assignRequest.taskId);
+            if (task == null)
+            {
+                return NotFound("Task not found");
+            }
+            var member = await _projectService.GetProjectMember(assignRequest.projectId, assignRequest.memberId);
+            await _taskService.AssignTask(assignRequest);
+            return Ok("Task assigned successfully");
         }
     }
 }

@@ -9,4 +9,5 @@ public interface IProjectRepository
     Task<Project?> UpdateProject(Guid? groupId, Project group);
     Task<bool> DeleteProject(Guid userId, Guid groupId);
     Task<IEnumerable<ProjectMember>> GetProjectMembers(Guid? groupId);
+    Task<ProjectMember?> GetProjectMemberById(Guid? ProjectId, Guid? MemberId);
 }

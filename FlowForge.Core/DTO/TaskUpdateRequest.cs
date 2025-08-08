@@ -1,4 +1,5 @@
 using FlowForge.Core.Domain.Entities;
+using FlowForge.Core.Domain.IdentityEntities;
 using FlowForge.Core.Enums;
 
 namespace FlowForge.Core.DTO;
@@ -8,10 +9,11 @@ public class TaskUpdateRequest
         public Guid TaskId { get; set; }
         public string? Title { get; set; }
         public string? Description { get; set; }
-        public bool Success { get; set; }
         public Guid ProjectId { get; set; }
         public Guid MemberId { get; set; }
         public ProjectTaskStatus Status { get; set; }
+        public Guid? AssigneeId { get; set; }
+        public ProjectMember? Assignee { get; set; }
 
     public ProjectTask ToTask()
         {
@@ -22,7 +24,8 @@ public class TaskUpdateRequest
                 Description = Description,
                 ProjectId = ProjectId,
                 CreatedById = MemberId,
-                Status = Status
+                Status = Status,
+                Assignee = Assignee
             };
         }
 }

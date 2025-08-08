@@ -42,5 +42,25 @@ namespace FlowForge.UI.Controllers
             await _context.SaveChangesAsync();
             return Ok("Migration completed successfully.");
         }
+
+        [HttpPost]
+        [Route("Assignee")]
+        public async Task<IActionResult> AssigneeToCreatedBy()
+        { 
+            var tasks = await _context.Tasks
+                .Include(t => t.CreatedBy)
+                .Include(t => t.Assignee)
+                .ToListAsync();
+
+            foreach (var task in tasks)
+            {
+                if (task.Assignee == null || task.Assignee.MemberId == Guid.Empty)
+                {
+                    task.Assignee = _context.ProjectMembers.FirstOrDefault(user => user.MemberId == task.CreatedById);
+                }
+            }
+            await _context.SaveChangesAsync();
+            return Ok("Assignee updated to CreatedBy for tasks without an assignee.");
+        }
     }
 }

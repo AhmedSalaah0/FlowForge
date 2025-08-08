@@ -8,8 +8,8 @@ namespace FlowForge.Core.Enums
 {
     public enum ProjectTaskStatus
     {
-        PENDING,
-        IN_PROGRESS,
-        COMPLETED,
+        Pending,
+        In_Progress,
+        Completed,
     }
 }

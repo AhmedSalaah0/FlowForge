@@ -77,6 +77,15 @@ public class ProjectRepository(ApplicationDbContext context) : IProjectRepositor
             .Include(gu => gu.Project)
             .ToListAsync();
     }
+
+    public async Task<ProjectMember?> GetProjectMemberById(Guid? ProjectId, Guid? MemberId)
+    {
+        return await _context.ProjectMembers
+            .Where(gu => gu.ProjectId == ProjectId && gu.MemberId == MemberId)
+            .Include(gu => gu.Member)
+            .Include(gu => gu.Project)
+            .FirstOrDefaultAsync();
+    }
     public async Task<bool> AddProjectMember(ProjectMember projectMember)
     {
         ArgumentNullException.ThrowIfNull(projectMember);

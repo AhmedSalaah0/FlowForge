@@ -4,6 +4,7 @@ using FlowForge.Infrastructure.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FlowForge.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250806110819_Add-Assignee")]
+    partial class AddAssignee
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -173,13 +176,13 @@ namespace FlowForge.Infrastructure.Migrations
 
                     b.HasKey("TaskId");
 
+                    b.HasIndex("AssigneeId");
+
                     b.HasIndex("CreatedById");
 
                     b.HasIndex("ProjectId");
 
                     b.HasIndex("SectionId");
-
-                    b.HasIndex("AssigneeId", "ProjectId");
 
                     b.ToTable("ProjectTasks", (string)null);
                 });
@@ -457,6 +460,10 @@ namespace FlowForge.Infrastructure.Migrations
 
             modelBuilder.Entity("FlowForge.Core.Domain.Entities.ProjectTask", b =>
                 {
+                    b.HasOne("FlowForge.Core.Domain.IdentityEntities.ApplicationUser", "Assignee")
+                        .WithMany()
+                        .HasForeignKey("AssigneeId");
+
                     b.HasOne("FlowForge.Core.Domain.IdentityEntities.ApplicationUser", "CreatedBy")
                         .WithMany()
                         .HasForeignKey("CreatedById")
@@ -473,11 +480,6 @@ namespace FlowForge.Infrastructure.Migrations
                         .WithMany("Tasks")
                         .HasForeignKey("SectionId")
                         .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("FlowForge.Core.Domain.Entities.ProjectMember", "Assignee")
-                        .WithMany()
-                        .HasForeignKey("AssigneeId", "ProjectId")
-                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Assignee");
 

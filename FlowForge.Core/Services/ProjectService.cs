@@ -3,6 +3,7 @@ using FlowForge.Core.Enums;
 using FlowForge.Core.Domain.RepositoryContract;
 using FlowForge.Core.DTO;
 using FlowForge.Core.ServiceContracts;
+using FlowForge.Core.Domain.IdentityEntities;
 
 namespace FlowForge.Core.Services
 {
@@ -40,7 +41,7 @@ namespace FlowForge.Core.Services
             {
                 throw new ArgumentNullException(nameof(projectId));
             }
-            var projectMembers = await _context.GetProjectMembers(projectId);   
+            var projectMembers = await _context.GetProjectMembers(projectId);
             var project = await _context.GetProjectById(userId, projectId);
             if (project == null)
             {
@@ -81,6 +82,20 @@ namespace FlowForge.Core.Services
                 throw new ArgumentNullException(nameof(projectId));
             }
             return _context.GetProjectMembers(projectId);
+        }
+
+        public async Task<ProjectMember> GetProjectMember(Guid? projectId, Guid memberId)
+        {
+            if (projectId == Guid.Empty)
+            {
+                throw new ArgumentNullException();
+            }
+            var projectMember = await _context.GetProjectMemberById(projectId, memberId);
+            if (projectMember == null)
+            {
+                throw new ArgumentException(nameof(projectId));
+            }
+            return projectMember;
         }
     }
 }
