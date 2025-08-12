@@ -1,4 +1,4 @@
-﻿@model IEnumerable<SectionWithTasksResponse>
+@model IEnumerable<SectionWithTasksResponse>
 @{
     ViewBag.Title = "Tasks";
     var projectId = ViewBag.ProjectId;
@@ -28,7 +28,7 @@
                 Project Members
             </button>
 
-            <ul class="dropdown-menu dropdown-menu-dark p-2 shadow" style="min-width: 250px;">
+            <ul class="dropdown-menu p-2 shadow" style="min-width: 250px;">
                 @foreach (var member in ViewBag.Members)
                 {
                     <li class="dropdown-item d-flex align-items-center justify-content-between gap-2 px-2 py-2 rounded-2">
@@ -105,13 +105,13 @@
                                 }
                             </div>
 
-                            <div class="dropdown ms-2">
-                            <button class="btn btn-outline-info btn-sm" type="button" id="taskMenuButton"
+                            <div class="dropdown ms-2" data-bs-display="static">
+                            <button class="btn btn-outline-info btn-sm" type="button" id="taskMenuButton-@task.TaskId"
                                     data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-ellipsis-v"></i>
                             </button>
 
-                            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="taskMenuButton">
+                            <ul class="dropdown-menu" aria-labelledby="taskMenuButton-@task.TaskId">
                                 <li>
                                     <a class="dropdown-item"
                                        asp-controller="Tasks" asp-action="EditTask"
@@ -133,9 +133,10 @@
 
                         <div class="d-flex gap-2 mt-3">
 
-                            <div class="dropdown">
-                                <button id="selectedStatus" class="btn btn-sm d-flex align-items-center gap-2 px-2 py-1 rounded-2 border border-secondary text-light"
+                                <div class="dropdown" data-bs-display="static">
+                                <button id="selectedStatus_@task.TaskId" class="btn btn-sm d-flex align-items-center gap-2 px-2 py-1 rounded-2 border border-secondary text-light"
                                         type="button"
+                                        data-bs-display="static"
                                         data-bs-toggle="dropdown"
                                         aria-expanded="false"
                                         data-status="@task.Status.ToString().ToLower()"
@@ -150,7 +151,7 @@
                                     <i class="fas fa-chevron-down ms-1 small"></i>
                                 </button>
 
-                                <ul class="dropdown-menu dropdown-menu-dark shadow-sm">
+                                <ul class="dropdown-menu shadow-sm">
                                     @foreach (var status in Enum.GetValues(typeof(ProjectTaskStatus)).Cast<ProjectTaskStatus>())
                                     {
                                         <li>
@@ -158,8 +159,7 @@
                                                     class="dropdown-item d-flex align-items-center gap-2 status-option @(status == task.Status ? "active" : "")"
                                                     data-task-id="@task.TaskId"
                                                     data-status="@status">
-                                                <span class="status-dot" style="width: 10px; height: 10px; border-radius: 50%;
-                                                      background-color:@(status == ProjectTaskStatus.Pending ? "#ffc107" :
+                                                    <span class="status-dot" style="background-color:@(status == ProjectTaskStatus.Pending ? "#ffc107" :
                                                                         status == ProjectTaskStatus.In_Progress ? "#0d6efd" :
                                                                         status == ProjectTaskStatus.Completed ? "#198754" : "#6c757d");">
                                                 </span>
@@ -171,16 +171,16 @@
                             </div>
 
                             <div class="dropdown">
-                                <button id="Assignee" class="btn btn-sm d-flex align-items-center gap-2 px-2 py-1 rounded-2 border border-secondary text-light"
+                                <button id="Assignee_@task.TaskId" class="btn btn-sm d-flex align-items-center gap-2 px-2 py-1 rounded-2 border border-secondary text-light"
                                         type="button"
                                         data-bs-toggle="dropdown"
                                         aria-expanded="false"
                                         style="font-size: 0.8rem;">
-                                    <span id="Assignee-span">@(task.Assignee?.Member.PersonName ?? "Unassigned")</span>
+                                    <span id="Assignee-span-@task.TaskId">@(task.Assignee?.Member.PersonName ?? "Unassigned")</span>
                                     <i class="fas fa-user ms-1 small" aria-hidden="true"></i>
                                 </button>
 
-                                <ul class="dropdown-menu dropdown-menu-dark shadow-sm">
+                                <ul class="dropdown-menu shadow-sm">
                                     @foreach (var person in task.Project.ProjectMembers)
                                     {
                                         <li>
@@ -189,7 +189,8 @@
                                                     data-task-id="@task.TaskId"
                                                     data-project-id = "@task.ProjectId"
                                                     data-assignee-id="@person.MemberId"
-                                                     id="assignee-name">
+                                                    data-old-assinee-id ="@task.AssigneeId"
+                                                     id="assignee-name-@person.MemberId">
                                                 @person.Member.PersonName
                                             </button>
                                         </li>
@@ -229,133 +230,102 @@
 @section Scripts {
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-                document.querySelectorAll(".task-card").forEach(taxtCard => {
-                    const checkbox = taxtCard.querySelector(".form-check-input");
-                    const dropdownBtn = taxtCard.querySelector("#selectedStatus");
-                    const spans = dropdownBtn.querySelectorAll("span");
-                    const dotSpan = spans[0];
-                    const textSpan = spans[1];
-                    const text = taxtCard.querySelector(".fw-semibold");
-                    const taskId = checkbox.dataset.taskId;
-
-                    checkbox.addEventListener("change", function() {
-                    const newStatus = checkbox.checked ? "Completed" : "Pending";
-
-                fetch(`/Tasks/taskState`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ 
-                            taskId: taskId,
-                            status: newStatus
-                    })
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error("Failed to update task status");
-                    return response.json();
-                })
-                .then(data => {
-                    textSpan.textContent = newStatus;
-                    dropdownBtn.dataset.status = newStatus;
-                    if (newStatus === "Completed") {
-                        text.classList.add("text-decoration-line-through");
-                        text.style.color = "#979494d1";
-                        dotSpan.style.backgroundColor = "#198754";
-                    } else {
-                        text.classList.remove("text-decoration-line-through");
-                        text.style.color = "#ffffff";
-                         dotSpan.style.backgroundColor = "#ffc107";
-                    }
-                })
-                .catch(err => {
-                    console.error("Error updating task state: ", err.message);
-                    location.reload();
-                });
+            var dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
+            var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+                return new bootstrap.Dropdown(dropdownToggleEl);
             });
 
             document.querySelectorAll('.status-option').forEach(button => {
-                    button.addEventListener('click', function () {
-                        const taskId = this.dataset.taskId;
-                        const newStatus = this.dataset.status;
-                        const taskCard = this.closest('.task-card');
-                        const checkbox = taskCard.querySelector(".form-check-input");
-                        const text = taskCard.querySelector(".fw-semibold");
-                        const dropdownBtn = taskCard.querySelector("#selectedStatus");
-                        const spans = dropdownBtn.querySelectorAll("span");
-                        const dotSpan = spans[0];
-                        const textSpan = spans[1];
+                button.addEventListener('click', function () {
+                    const taskId = this.dataset.taskId;
+                    const newStatus = this.dataset.status;
 
-                            fetch('/Tasks/taskState', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                            },
-                            body: JSON.stringify({
-                                taskId: taskId,
-                                status: newStatus
-                            })
-                        })
-                        .then(response => {
-                            if (response.ok) {
-                                if (newStatus === "Completed") {
-                                    text.classList.add("text-decoration-line-through");
-                                    text.style.color = "#979494d1";
-                                    dotSpan.style.backgroundColor = "#198754";
-                                    textSpan.textContent = "Completed";
-                                    checkbox.checked = true;
-                                } else if (newStatus == "Pending") {
-                                     dotSpan.style.backgroundColor = "#ffc107";
-                                     textSpan.textContent = "Pending";
-                                     text.classList.remove("text-decoration-line-through");
-                                     text.style.color = "#ffffff";
-                                        checkbox.checked = false;
-                                }
-                                else {
-                                     textSpan.textContent = "In Progress";
-                                     dotSpan.style.backgroundColor = "#0d6efd";
-                                     text.classList.remove("text-decoration-line-through");
-                                     dotSpan.style.backgroundColor = "#0d6efd";
-                                     text.style.color = "#ffffff";
-                                     checkbox.checked = false;
-                                }
-                            } else {
-                                alert("Failed to update task status.");
-                            }
-                        });
-                    });
-                });
+                    const taskCard = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
+                    if (!taskCard) {
+                        console.warn('task-card not found for', taskId);
+                        return;
+                    }
 
-                document.querySelectorAll('.assignee-option').forEach(button => {
-                    button.addEventListener('click', function () {
-                        const taskId = this.dataset.taskId;
-                        const projectId = this.dataset.projectId;
-                        const assigneeId = this.dataset.assigneeId;
-                        const taskCard = this.closest('.task-card');
-                        const assigneeSpan = taskCard.querySelector("#Assignee-span");
-                        fetch('/Tasks/Assign', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                            },
-                            body: JSON.stringify({
-                                taskId: taskId,
-                                projectId: projectId,
-                                memberId: assigneeId
-                            })
-                        })
-                        .then(response => {
-                            if (response.ok) {
-                                assigneeSpan.textContent = this.textContent.trim();
-                            } else {
-                                alert("Failed to assign task.");
-                            }
-                        });
-                    });
+                    const checkbox = taskCard.querySelector(".form-check-input");
+                    const text = taskCard.querySelector(".fw-semibold");
+                    const dropdownBtn = document.getElementById(`selectedStatus_${taskId}`) || taskCard.querySelector("[id^='selectedStatus']");
+                    const spans = dropdownBtn ? dropdownBtn.querySelectorAll("span") : [];
+                    const dotSpan = spans[0];
+                    const textSpan = spans[1];
+
+                    document.querySelectorAll(`.status-option[data-task-id="${taskId}"]`).forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+
+                fetch('/Tasks/taskState', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ taskId, status: newStatus })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        if (newStatus === "Completed") {
+                            text.classList.add("text-decoration-line-through");
+                            text.style.color = "#979494d1";
+                            dotSpan.style.backgroundColor = "#198754";
+                            textSpan.textContent = "Completed";
+                            checkbox.checked = true;
+                        } else if (newStatus === "Pending") {
+                            dotSpan.style.backgroundColor = "#ffc107";
+                            textSpan.textContent = "Pending";
+                            text.classList.remove("text-decoration-line-through");
+                            text.classList.remove("text-secondary")
+                            text.style.color = "#ffffff";
+                            checkbox.checked = false;
+                        } else {
+                            textSpan.textContent = "In Progress";
+                            dotSpan.style.backgroundColor = "#0d6efd";
+                            text.classList.remove("text-decoration-line-through");
+                            text.classList.remove("text-secondary")
+                            text.style.color = "#ffffff";
+                            checkbox.checked = false;
+                        }
+                    } else {
+                        alert("Failed to update task status.");
+                    }
                 });
+            });
         });
+
+        document.body.addEventListener('click', function (e) {
+            if (e.target.classList.contains('assignee-option')) {
+                const taskId = e.target.dataset.taskId;
+                const projectId = e.target.dataset.projectId;
+                const assigneeId = e.target.dataset.assigneeId;
+                const assigneeSpan = document.querySelector(`#Assignee-span-${taskId}`);
+
+                e.target.closest('ul').querySelectorAll('.assignee-option').forEach(opt => opt.classList.remove('active'));
+                e.target.classList.add('active');
+
+                fetch('/Tasks/Assign', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({
+                        taskId,
+                        projectId,
+                        memberId: assigneeId
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        assigneeSpan.textContent = e.target.textContent.trim();
+                    } else {
+                        alert("Failed to assign task.");
+                    }
+                });
+            }
+        });
+
 
         document.querySelectorAll(".task-list").forEach(list => {
         new Sortable(list, {
@@ -420,6 +390,54 @@
             }
         });
     });
-            });
+    document.querySelectorAll('.task-card .dropdown').forEach(dropdown => {
+          const toggle = dropdown.querySelector('[data-bs-toggle="dropdown"]');
+          const menu = dropdown.querySelector('.dropdown-menu');
+          if (!toggle || !menu) return;
+
+          let placeholder = null;
+
+          dropdown.addEventListener('show.bs.dropdown', () => {
+            placeholder = document.createComment('dropdown-placeholder');
+            menu.parentNode.insertBefore(placeholder, menu);
+
+            document.body.appendChild(menu);
+            menu.style.position = 'absolute';
+            menu.style.zIndex = '99999';
+            menu.style.minWidth = Math.max(toggle.offsetWidth, menu.offsetWidth) + 'px';
+          });
+
+          dropdown.addEventListener('shown.bs.dropdown', () => {
+            const r = toggle.getBoundingClientRect();
+            const menuRect = menu.getBoundingClientRect();
+
+            let left = r.left + window.scrollX;
+            let top  = r.bottom + window.scrollY;
+
+            if (left + menuRect.width > window.innerWidth) {
+              left = Math.max(window.innerWidth - menuRect.width - 8, 8);
+            }
+            if (top + menuRect.height > window.scrollY + window.innerHeight) {
+              top = r.top + window.scrollY - menuRect.height;
+            }
+
+            menu.style.left = left + 'px';
+            menu.style.top  = top + 'px';
+          });
+
+          dropdown.addEventListener('hide.bs.dropdown', () => {
+            if (placeholder) {
+              placeholder.parentNode.insertBefore(menu, placeholder);
+              placeholder.remove();
+              placeholder = null;
+              menu.style.position = '';
+              menu.style.left = '';
+              menu.style.top = '';
+              menu.style.zIndex = '';
+              menu.style.minWidth = '';
+            }
+          });
+        });
+    });
     </script>
 }

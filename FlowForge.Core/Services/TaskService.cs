@@ -207,23 +207,23 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
     public async Task<TaskResponse> AssignTask(AssignTaskRequest assignTask)
     {
         ArgumentNullException.ThrowIfNull(assignTask);
-        var project = await _projectService.GetProjectById(assignTask.memberId, assignTask.projectId);
+        var project = await _projectService.GetProjectById(assignTask.MemberId, assignTask.ProjectId);
         if (project == null)
         {
             throw new ArgumentException("Invalid projectId");
         }
         
-        if (project.ProjectMembers.FirstOrDefault(u => u.MemberId == assignTask.userId)?.MemberRole == ProjectRole.Member)
+        if (project.ProjectMembers.FirstOrDefault(u => u.MemberId == assignTask.UserId)?.MemberRole == ProjectRole.Member)
         {
             throw new UnauthorizedAccessException("You are not authorized to assign tasks in this project.");
         }
 
-        var task = _taskRepository.GetTaskById(assignTask.projectId, assignTask.taskId).Result;
+        var task = _taskRepository.GetTaskById(assignTask.ProjectId, assignTask.TaskId).Result;
         if (task == null)
         {
             throw new ArgumentException("Invalid taskId");
         }
-        var member = project.ProjectMembers.FirstOrDefault(u => u.MemberId == assignTask.memberId);
+        var member = project.ProjectMembers.FirstOrDefault(u => u.MemberId == assignTask.MemberId);
         if (member == null)
         {
             throw new ArgumentException("Member not found in the project");
@@ -231,7 +231,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
 
         
 
-        var UpdatedTask = await _taskRepository.AssignTask(task, assignTask.memberId);
+        var UpdatedTask = await _taskRepository.AssignTask(task, assignTask.MemberId);
         if (UpdatedTask == null) {
             throw new InvalidOperationException("can't assign this task");
         }
@@ -239,8 +239,8 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         {
             NotificationType = NotificationType.INFO,
             Message = $"Task: {task.Title} in project: {task.Project.ProjectTitle} assigned for you",
-            ReceiverId = assignTask.memberId,
-            ProjectId = assignTask.projectId,
+            ReceiverId = assignTask.MemberId,
+            ProjectId = assignTask.ProjectId,
         });
         return UpdatedTask.ToTaskResponse();
     }

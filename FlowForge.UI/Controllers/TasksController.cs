@@ -258,18 +258,18 @@ namespace FlowForge.UI.Controllers
             {
                 return Unauthorized("User not found");
             }
-            assignRequest.userId = user.Id;
+            assignRequest.UserId = user.Id;
             if (!ModelState.IsValid)
             {
                 ModelState.AddModelError("assignTask","Can't Assign the task");
                 return View("Tasks");
             }
-            var task = await _taskService.GetTaskById(assignRequest.projectId, assignRequest.taskId);
+            var task = await _taskService.GetTaskById(assignRequest.ProjectId, assignRequest.TaskId);
             if (task == null)
             {
                 return NotFound("Task not found");
             }
-            var member = await _projectService.GetProjectMember(assignRequest.projectId, assignRequest.memberId);
+            var member = await _projectService.GetProjectMember(assignRequest.ProjectId, assignRequest.MemberId);
             await _taskService.AssignTask(assignRequest);
             return Ok("Task assigned successfully");
         }

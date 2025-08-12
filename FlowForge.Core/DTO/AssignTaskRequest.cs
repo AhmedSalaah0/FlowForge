@@ -8,9 +8,9 @@ namespace FlowForge.Core.DTO
 {
     public class AssignTaskRequest
     {
-        public Guid projectId {  get; set; }
-        public Guid taskId { get; set; }
-        public Guid userId { get; set; }
-        public Guid memberId { get; set; }
+        public Guid ProjectId {  get; set; }
+        public Guid TaskId { get; set; }
+        public Guid UserId { get; set; }
+        public Guid MemberId { get; set; }
     }
 }
