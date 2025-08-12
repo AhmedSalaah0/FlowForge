@@ -5,10 +5,11 @@ using FlowForge.Core.DTO;
 using FlowForge.Core.ServiceContracts;
 namespace FlowForge.Core.Services;
 
-public class TaskService(ITaskRepository taskRepository, IProjectService projectService) : ITaskService
+public class TaskService(ITaskRepository taskRepository, IProjectService projectService, INotificationService notificationService) : ITaskService
 {
     private readonly ITaskRepository _taskRepository = taskRepository;
     private readonly IProjectService _projectService = projectService;
+    private readonly INotificationService _notificationService = notificationService;
 
     public async Task<TaskResponse> AddTask(Guid userId, TaskAddRequest? task)
     {
@@ -211,6 +212,11 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         {
             throw new ArgumentException("Invalid projectId");
         }
+        
+        if (project.ProjectMembers.FirstOrDefault(u => u.MemberId == assignTask.userId)?.MemberRole == ProjectRole.Member)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to assign tasks in this project.");
+        }
 
         var task = _taskRepository.GetTaskById(assignTask.projectId, assignTask.taskId).Result;
         if (task == null)
@@ -223,12 +229,19 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
             throw new ArgumentException("Member not found in the project");
         }
 
-        if (member.MemberRole == ProjectRole.Member)
-        {
-            throw new UnauthorizedAccessException("You are not authorized to assign tasks in this project.");
-        }
+        
 
         var UpdatedTask = await _taskRepository.AssignTask(task, assignTask.memberId);
+        if (UpdatedTask == null) {
+            throw new InvalidOperationException("can't assign this task");
+        }
+        _notificationService.SendNotification(new Notification()
+        {
+            NotificationType = NotificationType.INFO,
+            Message = $"Task: {task.Title} in project: {task.Project.ProjectTitle} assigned for you",
+            ReceiverId = assignTask.memberId,
+            ProjectId = assignTask.projectId,
+        });
         return UpdatedTask.ToTaskResponse();
     }
 }

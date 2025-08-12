@@ -9,7 +9,7 @@ namespace FlowForge.Core.DTO
         public string? Description { get; set; }
         public Guid ProjectId { get; set; }
         public Guid SectionId { get; set; }
-        public string Status { get; set; } = "PENDING";
+        public string Status { get; set; } = "Pending";
         public ProjectTask ToTask()
         {
             return new ProjectTask()

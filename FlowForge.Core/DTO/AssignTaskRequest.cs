@@ -10,6 +10,7 @@ namespace FlowForge.Core.DTO
     {
         public Guid projectId {  get; set; }
         public Guid taskId { get; set; }
+        public Guid userId { get; set; }
         public Guid memberId { get; set; }
     }
 }
