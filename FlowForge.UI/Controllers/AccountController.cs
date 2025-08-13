@@ -16,9 +16,13 @@ namespace FlowForge.UI.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
 
         [HttpGet]
-        //[Authorize("NotAuthorized")]
         public IActionResult Login()
         {
+            // If user is already logged in, redirect to Projects page
+            if (_signInManager.IsSignedIn(User))
+            {
+                return RedirectToAction("Index", "Projects");
+            }
             return View();
         }
 
@@ -51,6 +55,11 @@ namespace FlowForge.UI.Controllers
         [HttpGet]
         public IActionResult Register()
         {
+            // If user is already logged in, redirect to Projects page
+            if (_signInManager.IsSignedIn(User))
+            {
+                return RedirectToAction("Index", "Projects");
+            }
             return View();
         }
 

@@ -22,7 +22,8 @@ namespace FlowForge.Core.Services
                 ProjectId = groupTasks.ProjectId,
                 MemberId = userId,
                 Project = groupTasks,
-                MemberRole = ProjectRole.Creator
+                MemberRole = ProjectRole.Creator,
+                MembershipStatus = MembershipStatus.ACCEPTED
             };
             groupTasks.ProjectMembers.Add(UserGroup);
             var group = await _context.CreateProject(groupTasks);

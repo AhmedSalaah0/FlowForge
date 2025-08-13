@@ -12,6 +12,7 @@
             </h2>
 
             <form asp-controller="Projects" asp-action="CreateProject">
+                @Html.AntiForgeryToken()
                 <div class="mb-3">
                     <label asp-for="ProjectTitle" class="form-label">Project Title</label>
                     <input asp-for="ProjectTitle" class="form-control bg-dark text-light border-secondary" placeholder="Enter project title" />

@@ -71,13 +71,18 @@
                                         <i class="fas fa-user-plus"></i>
                                     </a>
 
-                                    <a asp-controller="Projects"
-                                       asp-action="DeleteProject"
-                                       asp-route-projectId="@project.ProjectId"
-                                       class="btn btn-sm btn-outline-light"
-                                       title="Delete Project">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </a>
+                                    <form asp-controller="Projects"
+                                          asp-action="DeleteProject"
+                                          asp-route-projectId="@project.ProjectId"
+                                          method="post"
+                                          class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-light"
+                                                title="Delete Project">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>

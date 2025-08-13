@@ -72,7 +72,7 @@ public class ProjectRepository(ApplicationDbContext context) : IProjectRepositor
     public async Task<IEnumerable<ProjectMember>> GetProjectMembers(Guid? ProjectId)
     {
         return await _context.ProjectMembers
-            .Where(gu => gu.ProjectId == ProjectId)
+            .Where(gu => gu.ProjectId == ProjectId && gu.MembershipStatus == MembershipStatus.ACCEPTED)
             .Include(gu => gu.Member)
             .Include(gu => gu.Project)
             .ToListAsync();

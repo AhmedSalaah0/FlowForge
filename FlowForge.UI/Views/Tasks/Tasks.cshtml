@@ -47,15 +47,18 @@
                             </div>
                         </div>
 
-                        <form asp-controller="ProjectMembers"
-                              asp-action="RemoveMember"
-                              asp-route-projectId="@projectId"
-                              asp-route-memberId="@member.Member.Id"
-                              method="post" class="d-inline m-0">
-                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Remove Member">
-                                <i class="fas fa-user-minus"></i>
-                            </button>
-                        </form>
+                        @if(member.MemberRole != ProjectRole.Creator)
+                        {
+                            <form asp-controller="ProjectMembers"
+                                  asp-action="RemoveMember"
+                                  asp-route-projectId="@projectId"
+                                  asp-route-memberId="@member.Member.Id"
+                                  method="post" class="d-inline m-0">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Remove Member">
+                                    <i class="fas fa-user-minus"></i>
+                                </button>
+                            </form>
+                        }
                     </li>
                 }
             </ul>
@@ -82,7 +85,8 @@
                             <div class="form-check mt-1">
                                 <input class="form-check-input" type="checkbox"
                                        id="taskCheck_@task.TaskId"
-                                       data-status="@task.Status.ToString().ToLower()"
+                                       data-status="@task.Status.ToString()"
+                                       data-project-id = "@task.ProjectId"
                                        data-task-id="@task.TaskId"
                                        @(task.Status == ProjectTaskStatus.Completed ? "checked" : "") />
                             </div>
@@ -139,7 +143,7 @@
                                         data-bs-display="static"
                                         data-bs-toggle="dropdown"
                                         aria-expanded="false"
-                                        data-status="@task.Status.ToString().ToLower()"
+                                        data-status="@task.Status.ToString()"
                                         style="font-size: 0.8rem;">
                                     <span class="status-dot"
                                           style="width: 10px; height: 10px; border-radius: 50%; display: inline-block;
@@ -158,6 +162,7 @@
                                             <button type="button"
                                                     class="dropdown-item d-flex align-items-center gap-2 status-option @(status == task.Status ? "active" : "")"
                                                     data-task-id="@task.TaskId"
+                                                    data-project-id ="@task.ProjectId"
                                                     data-status="@status">
                                                     <span class="status-dot" style="background-color:@(status == ProjectTaskStatus.Pending ? "#ffc107" :
                                                                         status == ProjectTaskStatus.In_Progress ? "#0d6efd" :
@@ -214,6 +219,7 @@
         <div class="card bg-dark text-white border border-secondary p-3 rounded-4 d-flex align-items-center justify-content-start"
              style="min-width: 300px; flex: 0 0 auto;">
             <form asp-controller="Sections" asp-action="AddSection" method="post" class="w-100">
+                @Html.AntiForgeryToken()
                 <input type="hidden" name="ProjectId" value="@projectId" />
                 <div class="mb-2">
                     <input name="SectionName" class="form-control bg-secondary text-white border-0" placeholder="New Section..." required />
@@ -238,6 +244,7 @@
             document.querySelectorAll('.status-option').forEach(button => {
                 button.addEventListener('click', function () {
                     const taskId = this.dataset.taskId;
+                    const projectId = this.dataset.projectId;
                     const newStatus = this.dataset.status;
 
                     const taskCard = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
@@ -262,7 +269,7 @@
                         'Content-Type': 'application/json',
                         'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                     },
-                    body: JSON.stringify({ taskId, status: newStatus })
+                    body: JSON.stringify({ taskId, projectId ,status: newStatus })
                 })
                 .then(response => {
                     if (response.ok) {
@@ -293,7 +300,56 @@
                 });
             });
         });
-
+        
+        document.body.addEventListener("change", function(e) {
+            if (e.target.classList.contains("form-check-input")) {
+                const taskId = e.target.dataset.taskId;
+                const projectId = e.target.dataset.projectId;
+                const status = e.target.dataset.status == "Completed" ? "Pending" : "Completed";
+                const taskCard = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
+                const checkbox = taskCard.querySelector(".form-check-input");
+                const text = taskCard.querySelector(".fw-semibold");
+                const dropdownBtn = document.getElementById(`selectedStatus_${taskId}`) || taskCard.querySelector("[id^='selectedStatus']");
+                const spans = dropdownBtn ? dropdownBtn.querySelectorAll("span") : [];
+                const dotSpan = spans[0];
+                const textSpan = spans[1];
+                fetch("/Tasks/TaskState",{
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({
+                        taskId,
+                        projectId,
+                        status
+                    })
+                })
+                .then(response => {
+                    if (response.ok)
+                    {
+                        if (status === "Completed")
+                        {
+                             text.classList.add("text-decoration-line-through");
+                             text.style.color = "#979494d1";
+                             dotSpan.style.backgroundColor = "#198754";
+                             textSpan.textContent = "Completed";
+                             checkbox.checked = true;
+                        }
+                        else
+                        {
+                            dotSpan.style.backgroundColor = "#ffc107";
+                            textSpan.textContent = "Pending";
+                            text.classList.remove("text-decoration-line-through");
+                            text.classList.remove("text-secondary")
+                            text.style.color = "#ffffff";
+                            checkbox.checked = false;
+                        }
+                        e.target.dataset.status = status;
+                    }
+                })
+            }
+        })
         document.body.addEventListener('click', function (e) {
             if (e.target.classList.contains('assignee-option')) {
                 const taskId = e.target.dataset.taskId;

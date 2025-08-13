@@ -4,6 +4,7 @@ using FlowForge.Core.DTO;
 using FlowForge.Core.Enums;
 using FlowForge.Core.ServiceContracts;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace FlowForge.Core.Services
 {
@@ -79,8 +80,15 @@ namespace FlowForge.Core.Services
             }
 
             await _projectMemberRepository.RemoveProjectMember(memberToRemove);
-            var notification = (await _notificationService.GetNotifications(userId))?.FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == userId)?.NotificationId;
-            await _notificationService.DeleteNotification(notification ?? Guid.Empty);
+            try
+            {
+                var notification = (await _notificationService.GetNotifications(memberId))?.FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == memberId).NotificationId;
+                await _notificationService.DeleteNotification(notification ?? Guid.Empty);
+            }
+            catch (Exception ex)
+            {
+                throw new UnauthorizedAccessException("Failed to delete notification.", ex);
+            }
             await _notificationService.SendNotification(new Notification
             {
                 NotificationId = Guid.NewGuid(),
@@ -101,7 +109,7 @@ namespace FlowForge.Core.Services
             {
                 throw new ArgumentException("Invalid project or user ID.");
             }
-            var projectMember = _projectRepository.GetProjectMembers(projectId).Result.FirstOrDefault(pm => pm.MemberId == userId && pm.ProjectId == projectId);
+            var projectMember = await _projectRepository.GetProjectMemberById(projectId, userId);
             if (projectMember == null)
             {
                 throw new ArgumentException("Project member not found.");

@@ -9,6 +9,7 @@ namespace FlowForge.Core.DTO
     public class TaskUpdateStatus
     {
         public Guid TaskId { get; set; }
+        public Guid ProjectId { get; set; }
         public string Status { get; set; } = string.Empty;
     }
 }

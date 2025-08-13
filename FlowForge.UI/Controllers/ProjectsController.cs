@@ -19,7 +19,7 @@ namespace FlowForge.UI.Controllers
 
         [Route("/")]
         public async Task<IActionResult> Index()
-        {
+            {
             ApplicationUser user = await _userManager.FindByNameAsync(User.Identity.Name);
             var Tasks = await _projectService.GetProjects(user.Id);
 
@@ -66,7 +66,7 @@ namespace FlowForge.UI.Controllers
         {
             if (projectId == Guid.Empty)
             {
-                return BadRequest("Invalid project ID");
+                ModelState.AddModelError("ProjectId", "Project ID cannot be empty");
             }
             var user = await _userManager.FindByEmailAsync(User.Identity.Name);
             if (user == null)
@@ -76,7 +76,14 @@ namespace FlowForge.UI.Controllers
             var project = await _projectService.GetProjectById(user.Id ,projectId);
             if (project == null)
             {
-                return BadRequest();
+                ModelState.AddModelError("ProjectId", "Project not found");
+                return View("Index", await _projectService.GetProjects(user.Id));
+            }
+
+            if (project.ProjectMembers.FirstOrDefault(u => u.MemberId == user.Id).MemberRole != Core.Enums.ProjectRole.Creator)
+            {
+                ModelState.AddModelError("ProjectId", "You do not have permission to edit this project");
+                return View("Index", await _projectService.GetProjects(user.Id));
             }
             return View("EditProject", project);
         }
@@ -101,7 +108,7 @@ namespace FlowForge.UI.Controllers
             return RedirectToAction("Index");
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("projects/delete/{projectId}")]
         public async Task<IActionResult> DeleteProject(Guid projectId)
         {

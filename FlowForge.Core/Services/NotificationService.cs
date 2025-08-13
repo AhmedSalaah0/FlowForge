@@ -12,7 +12,7 @@ namespace FlowForge.Core.Services
     public class NotificationService(INotificationRepository notificationRepository) : INotificationService
     {
         private readonly INotificationRepository _notificationRepository = notificationRepository;
-        public Task<bool> SendNotification(Notification notification)
+        public async Task<bool> SendNotification(Notification notification)
         {
             if (notification == null)
             {
@@ -22,36 +22,36 @@ namespace FlowForge.Core.Services
             {
                 notification.NotificationId = Guid.NewGuid();
             }
-            var result = _notificationRepository.SendNotification(notification);
+            var result = await _notificationRepository.SendNotification(notification);
             return result;
         }
 
-        public Task<List<Notification>> GetNotifications(Guid userId)
+        public async Task<List<Notification>> GetNotifications(Guid userId)
         {
             if (userId == Guid.Empty)
             {
                 throw new ArgumentException("User ID cannot be empty.", nameof(userId));
             }
-            var result = _notificationRepository.GetNotifications(userId);
+            var result = await _notificationRepository.GetNotifications(userId);
             return result;
         }
 
-        public Task<bool> DeleteNotification(Guid notificationId)
+        public async Task<bool> DeleteNotification(Guid notificationId)
         {
             if (notificationId == Guid.Empty)
             {
                 throw new ArgumentException("Notification ID cannot be empty.", nameof(notificationId));
             }
-            var result = _notificationRepository.DeleteNotification(notificationId);
+            var result = await _notificationRepository.DeleteNotification(notificationId);
             return result;
         }
-        public Task<int> GetUnreadNotificationCount(Guid userId)
+        public async Task<int> GetUnreadNotificationCount(Guid userId)
         {
             if (userId == Guid.Empty)
             {
                 throw new ArgumentException("User ID cannot be empty.", nameof(userId));
             }
-            var result = _notificationRepository.GetUnreadNotificationCount(userId);
+            var result = await _notificationRepository.GetUnreadNotificationCount(userId);
             return result;
         }
 

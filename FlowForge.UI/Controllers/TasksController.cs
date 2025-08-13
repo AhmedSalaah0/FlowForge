@@ -175,6 +175,30 @@ namespace FlowForge.UI.Controllers
         [Route("EditTask")]
         public async Task<IActionResult> EditTask(Guid projectId, Guid taskId)
         {
+            var user = await _userManager.FindByEmailAsync(User.Identity.Name);
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+            if (projectId == Guid.Empty || taskId == Guid.Empty)
+            {
+                ModelState.AddModelError("ProjectId", "Project ID cannot be empty");
+                return BadRequest(ModelState);
+            }
+
+            var project = await _projectService.GetProjectById(user.Id, projectId);
+            if (project == null)
+            {
+                ModelState.AddModelError("ProjectId", "Project not found");
+                return BadRequest(ModelState);
+            }
+
+            if (project.ProjectMembers.FirstOrDefault(u => u.MemberId == user.Id)?.MemberRole == ProjectRole.Member)
+            {
+                ModelState.AddModelError("ProjectRole", "You do not have permission to edit this task");
+                return View("Tasks", await _taskService.GetAllProjectTasks(user.Id, projectId));
+            }
+
             var task = await _taskService.GetTaskById(projectId, taskId);
             if (task == null)
             {
@@ -221,6 +245,8 @@ namespace FlowForge.UI.Controllers
             {
                 return BadRequest("Invalid request");
             }
+            
+            var task = await _taskService.GetTaskById(taskUpdateStatus.ProjectId, taskUpdateStatus.TaskId);
 
             bool updated = await _taskService.UpdateTaskStatus(taskUpdateStatus);
 
