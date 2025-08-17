@@ -16,104 +16,153 @@
 
 </head>
 <body class="bg-dark text-white">
-    <div class="container">
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow rounded mt-3 mb-4 px-4 sticky-top" style="z-index:1000;">
-    <div class="container-fluid">
-        <a class="navbar-brand d-flex align-items-center" href="/">
-                    <i class="fas fa-check-square me-2"></i> FlowForge
-        </a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm px-4 sticky-top">
+        <div class="container-fluid">
 
-        <div class="d-flex align-items-center gap-3">
-            @if (!User.Identity.IsAuthenticated)
-            {
-                <a class="nav-link text-white" href="/Account/Login">
-                    <i class="fas fa-sign-in-alt me-1"></i> Login
-                </a>
-                <a class="nav-link text-white" href="/Account/Register">
-                    <i class="fas fa-user-plus me-1"></i> Register
-                </a>
-            }
-            else
-            {
-                <a class="nav-link text-white" href="/">
-                    <i class="fas fa-home me-1"></i> Home
-                </a>
-                @* <a class="nav-link text-white" href="/tasks/completed">
-                    <i class="fas fa-check-double me-1"></i> Completed
-                </a> *@
-                        <div id="notificationWrapper">
-                            <div class="nav-item dropdown">
-                                <a class="nav-link text-light position-relative" href="#">
-                                    <i class="fas fa-bell"></i>
-                                </a>
+            <a class="navbar-brand d-flex align-items-center py-0" href="/">
+                <i class="fas fa-check-square me-2"></i> FlowForge
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                    aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                   @if (User.Identity.IsAuthenticated)
+                   {
+                        <li class="nav-item">
+                        <a class="nav-link text-white py-1 px-2" href="/">
+                            <i class="fas fa-home me-1"></i> Home
+                        </a>
+                    </li>
+
+                    <li class="nav-item dropdown" id="notificationWrapper">
+                        <a class="nav-link text-white py-1 px-2 position-relative"
+                           href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bell"></i>
+                            <span id="unreadCount"
+                                  class="position-absolute top-0 start-90 translate-middle badge rounded-pill bg-danger d-none">
+                            </span>
+                        </a>
+                        <div id="notificationMenu"
+                             class="dropdown-menu dropdown-menu-end bg-dark text-white shadow p-2 notification-dropdown">
+                            <div class="text-center text-light py-2">
+                                <i class="fas fa-spinner fa-spin"></i> Loading...
                             </div>
                         </div>
-                <a class="nav-link text-white" href="#">
-                    <i class="fas fa-user-circle me-1"></i> Profile
-                </a>
-                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                    <button type="submit" class="btn btn-link nav-link text-white p-0">
-                        <i class="fas fa-sign-out-alt me-1"></i> Logout
-                    </button>
-                            @Html.AntiForgeryToken()
-                 </form>
-            }
+                    </li>
 
-            @* <button class="dark-mode-toggle" id="darkModeToggle" title="Toggle Dark Mode">
-                <i class="fas fa-moon"></i>
-            </button> *@
+                    <li class="nav-item">
+                        <a class="nav-link text-white py-1 px-2" href="#">
+                            <i class="fas fa-user-circle me-1"></i> Profile
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-link nav-link text-white py-1 px-2">
+                                <i class="fas fa-sign-out-alt me-1"></i> Logout
+                            </button>
+                            @Html.AntiForgeryToken()
+                        </form>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-white py-1 px-2" asp-controller="Account" asp-action="Login">
+                                <i class="fas fa-sign-in-alt me-1"></i> Login
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link text-white py-1 px-2" asp-controller="Account" asp-action="Register">
+                                <i class="fas fa-user-plus me-1"></i> Register
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
+    <form id="antiforgeryForm" method="post" class="d-none">
+    @Html.AntiForgeryToken()
+    </form>
+
         <main>
             @RenderBody()
         </main>
-    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     @await Html.PartialAsync("_ValidationScriptsPartial")
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const wrapper = document.getElementById('notificationWrapper');
+            const notificationMenu = document.getElementById('notificationMenu');
+            const dropdownTrigger = document.getElementById('notificationDropdown');
 
-            fetch('/notification', {
+            fetch('/Notification', {
                 method: 'GET',
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html'
                 }
             })
-            .then(response => response.text())
-                    .then(html => {
-            wrapper.innerHTML = html;
-
-                    const dropdownTrigger = document.querySelector('#notificationDropdown');
-        if (dropdownTrigger) {
-            new bootstrap.Dropdown(dropdownTrigger);
-        }
-
-        dropdownTrigger?.addEventListener('show.bs.dropdown', () => {
-            console.log("Dropdown opened");
-
-            fetch('/Notification/MarkAllAsRead', {
-                method: 'POST',
-                headers: { 
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-            }).then(res => {
-                if (!res.ok) {
-                    console.error("Failed to mark notifications as read");
-                } else {
-                    console.log("Notifications marked as read");
-                    document.getElementById('unreadCount')?.remove();
+                return response.text();
+            })
+            .then(html => {
+                if (notificationMenu) 
+                notificationMenu.innerHTML = html;
+                    const unreadInput = document.getElementById("hiddenUnreadCount");
+
+                    if (unreadInput) {
+                        const unread = parseInt(unreadInput.value || "0");
+                        const badge = document.getElementById("unreadCount");
+                        if (badge) {
+                            if (unread > 0) {
+                                badge.textContent = unread;
+                                badge.classList.remove("d-none");
+                            } else {
+                                badge.classList.add("d-none");
+                            }
+                        }
+                    }
+                if (dropdownTrigger) {
+                    try { new bootstrap.Dropdown(dropdownTrigger); } catch(e) {
+                        console.log('Dropdown already initialized or error:', e);
+                    }
+
+                    dropdownTrigger.addEventListener('show.bs.dropdown', () => {
+                        const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                        const token = tokenInput ? tokenInput.value : null;
+                        console.log('Token for marking all as read:', token);
+                        fetch('/Notification/MarkAllAsRead', {
+                        method: 'POST',
+                        headers: {
+                            "RequestVerificationToken": token
+                        }
+                    })
+                        .then(res => {
+                            if (!res.ok) throw new Error("HTTP " + res.status);
+                            document.getElementById('unreadCount')?.classList.add('d-none');
+
+                        })
+                        .catch(err => console.error("Error marking notifications read", err));
+                    });
                 }
-            }).catch(err => {
-                console.error("Error during fetch", err);
-            });
-        });
-        })
+            })
             .catch(error => {
                 console.error('Failed to load notifications:', error);
+                if (notificationMenu) {
+                    notificationMenu.innerHTML = '<div class="text-center text-muted py-2">Failed to load notifications</div>';
+                }
             });
         });
     </script>

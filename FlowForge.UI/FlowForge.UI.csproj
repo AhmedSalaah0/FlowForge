@@ -4,13 +4,18 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <SonarQubeExclude>True</SonarQubeExclude>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="Properties\PublishProfiles\**" />
+    <Compile Remove="wwwroot\lib\bootstrap\**" />
     <Content Remove="Properties\PublishProfiles\**" />
+    <Content Remove="wwwroot\lib\bootstrap\**" />
     <EmbeddedResource Remove="Properties\PublishProfiles\**" />
+    <EmbeddedResource Remove="wwwroot\lib\bootstrap\**" />
     <None Remove="Properties\PublishProfiles\**" />
+    <None Remove="wwwroot\lib\bootstrap\**" />
     <_WebToolingArtifacts Remove="Properties\PublishProfiles\**" />
   </ItemGroup>
 

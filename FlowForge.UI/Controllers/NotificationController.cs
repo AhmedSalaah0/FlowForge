@@ -22,17 +22,22 @@ namespace FlowForge.UI.Controllers
             {
                 return Unauthorized("User not found");
             }
-
-            var notifications = await _notificationService.GetNotifications(user.Id);
-
-            return PartialView("_NotificationPartialView", notifications);
+            try
+            {
+                var notifications = await _notificationService.GetNotifications(user.Id);
+                return PartialView("_NotificationPartialView", notifications);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message });
+            }
         }
 
         [HttpPost]
         [Route("[action]")]
         public async Task<IActionResult> MarkAllAsRead()
         {
-            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+            var user = await _userManager.FindByEmailAsync(User.Identity.Name);
             if (user == null)
             {
                 return Unauthorized("User not found");

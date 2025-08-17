@@ -1,77 +1,85 @@
 ﻿@using FlowForge.Core.Enums
 @model IEnumerable<Notification>
+@{
+    var unreadCount = Model.Count(n => !n.IsRead);
+}
 
-
-
-<div class="nav-item dropdown">
-    <a class="nav-link text-light position-relative" id="notificationDropdown" href="#" role="button" data-bs-toggle="dropdown">
-        <i class="fas fa-bell"></i>
-        @if (Model.Any(n => !n.IsRead))
+<input type="hidden" id="hiddenUnreadCount" value="@unreadCount" />
+<div class="notification-content">
+    @if (!Model.Any())
+    {
+        <div class="text-center text-muted py-3">
+            <i class="fas fa-info-circle me-1"></i>
+            <span class="d-none d-sm-inline">No notifications</span>
+            <span class="d-sm-none">No notifications</span>
+        </div>
+    }
+    else
+    {
+        @foreach (var notification in Model.Take(5))
         {
-            <span id="unreadCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                @Model.Count(n => !n.IsRead)
-                <span class="visually-hidden">unread messages</span>
-            </span>
-        }
-    </a>
+            <div class="dropdown-item text-white border-bottom border-secondary notification-item @(!notification.IsRead ? "unread" : "")">
+                <div class="mb-1 fw-semibold text-info notification-message">
+                    @notification.Message
+                </div>
 
-    <div class="dropdown-menu dropdown-menu-end bg-dark text-white shadow p-2" style="min-width: 300px; position:absolute;">
-        @if (!Model.Any())
-        {
-            <div class="text-center text-muted py-2">
-                <i class="fas fa-info-circle me-1"></i> No notifications
-            </div>
-        }
-        else
-        {
-            @foreach (var notification in Model.Take(5))
-            {
-                <div class="dropdown-item text-white border-bottom border-secondary py-3 px-2 notification-item">
-                    <div class="mb-1 fw-semibold text-info">
-                        @notification.Message
-                    </div>
-
-                    <small class="text-light d-block mb-2">
+                <small class="text-light d-block mb-2 notification-time">
+                    <span class="d-none d-md-inline">
                         @notification.CreatedAt.ToLocalTime().ToString("g")
-                    </small>
+                    </span>
+                    <span class="d-md-none">
+                        @notification.CreatedAt.ToLocalTime().ToString("M/d h:mm tt")
+                    </span>
+                </small>
 
-                    @if (notification.NotificationType == NotificationType.JOIN_REQUEST)
-                    {
-                        <div class="d-flex gap-2">
-                            <form asp-controller="ProjectMembers" asp-action="AcceptInvite" method="post" class="d-inline">
-                                <input type="hidden" name="projectId" value="@notification.ProjectId" />
-                                <button type="submit" class="btn btn-sm btn-outline-success">Accept</button>
-                                @Html.AntiForgeryToken()
-                            </form>
-                            <form asp-controller="ProjectMembers" asp-action="RejectInvite" method="post" class="d-inline">
-                                <input type="hidden" name="projectId" value="@notification.ProjectId" />
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
-                                @Html.AntiForgeryToken()
-                            </form>
-                        </div>
-                    }
-                    @{
-                        var member = notification.Project.ProjectMembers
-                        .FirstOrDefault(u => u.MemberId == notification.ReceiverId && u.ProjectId == notification.ProjectId);
-                    }
-                    @if (notification.NotificationType == NotificationType.INFO && member?.MembershipStatus == MembershipStatus.REJECTED)
-                    {
+                @if (notification.NotificationType == NotificationType.JOIN_REQUEST)
+                {
+                    <div class="notification-actions">
                         <form asp-controller="ProjectMembers" asp-action="AcceptInvite" method="post" class="d-inline">
                             <input type="hidden" name="projectId" value="@notification.ProjectId" />
-                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                Undo Rejection
+                            <button type="submit" class="btn btn-sm btn-outline-success action-btn">
+                                <i class="fas fa-check d-sm-none"></i>
+                                <span class="d-none d-sm-inline">Accept</span>
                             </button>
+                            @Html.AntiForgeryToken()
                         </form>
-                    }
-                </div>
-            }
+                        <form asp-controller="ProjectMembers" asp-action="RejectInvite" method="post" class="d-inline">
+                            <input type="hidden" name="projectId" value="@notification.ProjectId" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger action-btn">
+                                <i class="fas fa-times d-sm-none"></i>
+                                <span class="d-none d-sm-inline">Reject</span>
+                            </button>
+                            @Html.AntiForgeryToken()
+                        </form>
+                    </div>
+                }
 
+                @{
+                    var member = ((IEnumerable<ProjectMember>)notification.Project.ProjectMembers)
+                    .FirstOrDefault(u => u.MemberId == notification.ReceiverId
+                    && u.ProjectId == notification.ProjectId);
+                }
+
+                @if (notification.NotificationType == NotificationType.INFO && member?.MembershipStatus == MembershipStatus.REJECTED)
+                {
+                    <form asp-controller="ProjectMembers" asp-action="AcceptInvite" method="post" class="d-inline">
+                        <input type="hidden" name="projectId" value="@notification.ProjectId" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger action-btn w-100">
+                            <i class="fas fa-undo d-sm-none"></i>
+                            <span class="d-none d-sm-inline">Undo Rejection</span>
+                            <span class="d-sm-none">Undo</span>
+                        </button>
+                    </form>
+                }
+            </div>
         }
+    }
 
-        <div class="dropdown-item text-center mt-2">
-            <a href="/Notifications/All" class="btn btn-sm btn-outline-light w-100">
-                View All
-            </a>
-        </div>
+    <div class="dropdown-item text-center mt-2 p-2">
+        <a href="/Notifications/All" class="btn btn-sm btn-outline-light view-all-btn">
+            <i class="fas fa-list d-sm-none"></i>
+            <span class="d-none d-sm-inline">View All Notifications</span>
+            <span class="d-sm-none">View All</span>
+        </a>
     </div>
 </div>

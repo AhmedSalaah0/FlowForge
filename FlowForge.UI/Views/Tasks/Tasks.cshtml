@@ -155,7 +155,7 @@
                                     <i class="fas fa-chevron-down ms-1 small"></i>
                                 </button>
 
-                                <ul class="dropdown-menu shadow-sm">
+                                    <ul class="dropdown-menu bg-secondary shadow-sm">
                                     @foreach (var status in Enum.GetValues(typeof(ProjectTaskStatus)).Cast<ProjectTaskStatus>())
                                     {
                                         <li>
@@ -185,7 +185,7 @@
                                     <i class="fas fa-user ms-1 small" aria-hidden="true"></i>
                                 </button>
 
-                                <ul class="dropdown-menu shadow-sm">
+                                    <ul class="dropdown-menu bg-secondary shadow-sm">
                                     @foreach (var person in task.Project.ProjectMembers)
                                     {
                                         <li>
