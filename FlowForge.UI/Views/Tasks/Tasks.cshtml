@@ -28,7 +28,7 @@
                 Project Members
             </button>
 
-            <ul class="dropdown-menu p-2 shadow" style="min-width: 250px;">
+            <ul class="dropdown-menu dropdown-menu-dark p-2 shadow" style="min-width: 250px;">
                 @foreach (var member in ViewBag.Members)
                 {
                     <li class="dropdown-item d-flex align-items-center justify-content-between gap-2 px-2 py-2 rounded-2">
@@ -119,7 +119,7 @@
                                     <i class="fas fa-ellipsis-v"></i>
                                 </button>
 
-                                <ul class="dropdown-menu" aria-labelledby="taskMenuButton-@task.TaskId">
+                                <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="taskMenuButton-@task.TaskId">
                                     <li>
                                         <a class="dropdown-item"
                                            asp-controller="Tasks" asp-action="EditTask"
@@ -159,7 +159,7 @@
                                         <i class="fas fa-chevron-down ms-1 small"></i>
                                     </button>
 
-                                        <ul class="dropdown-menu bg-secondary shadow-sm">
+                                        <ul class="dropdown-menu dropdown-menu-dark shadow-sm">
                                         @foreach (var status in Enum.GetValues(typeof(ProjectTaskStatus)).Cast<ProjectTaskStatus>())
                                         {
                                             <li>
@@ -189,7 +189,7 @@
                                         <i class="fas fa-user ms-1 small" aria-hidden="true"></i>
                                     </button>
 
-                                        <ul class="dropdown-menu bg-secondary shadow-sm">
+                                        <ul class="dropdown-menu dropdown-menu-dark shadow-sm">
                                         @foreach (var person in task.Project.ProjectMembers)
                                         {
                                             <li>
