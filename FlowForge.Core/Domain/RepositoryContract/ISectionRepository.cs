@@ -6,7 +6,7 @@ namespace FlowForge.Core.Domain.RepositoryContract
     {
         Task<bool> AddSection(ProjectSection sectionAddRequest);
         Task<ProjectSection?> GetProjectSectionById(Guid sectionId);
-
         Task<bool> DeleteSection(Guid sectionId);
+        Task<ProjectSection?> EditSectionName(ProjectSection projectSection);
     }
 }

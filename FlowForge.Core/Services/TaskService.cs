@@ -244,4 +244,34 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         });
         return UpdatedTask.ToTaskResponse();
     }
+
+    public async Task<bool> ReorderTask(ReorderRequest reorderRequest, Guid userId)
+    {
+        ArgumentNullException.ThrowIfNull(reorderRequest);
+        if (reorderRequest.ProjectId == Guid.Empty || reorderRequest.SectionId == Guid.Empty)
+        {
+            throw new ArgumentException("Invalid project or section ID");
+        }
+
+        var tasks = (await _taskRepository.GetTasks(userId, reorderRequest.ProjectId))
+                    .SelectMany(section => section.Tasks)
+                    .Where(t => t.SectionId == reorderRequest.SectionId);
+
+        for (int i = 0; i < reorderRequest.TaskIds.Count; i++)
+        {
+            var TaskId = reorderRequest.TaskIds[i];
+            var task = tasks.FirstOrDefault(t => t.TaskId == TaskId);
+            if (task is not null)
+            {
+                task.Order = i;
+                _taskRepository.UpdateTaskOrder(task);
+            }
+            else
+            {
+                throw new ArgumentException($"Task with ID {TaskId} not found in the specified section.");
+            }
+        }
+        await _taskRepository.SaveChangesAsync();
+        return true;
+    }
 }

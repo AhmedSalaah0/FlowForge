@@ -31,5 +31,11 @@ namespace FlowForge.Infrastructure.Repositories
             return true;
         }
 
+        public async Task<ProjectSection?> EditSectionName(ProjectSection projectSection)
+        {
+            context.Update(projectSection);
+            await context.SaveChangesAsync();
+            return projectSection ?? null;
+        }
     }
 }

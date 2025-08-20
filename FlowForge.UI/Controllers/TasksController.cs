@@ -13,11 +13,12 @@ namespace FlowForge.UI.Controllers
     [Controller]
     [Route("[controller]")]
     //[Authorize]
-    public class TasksController(IProjectService projectService, ITaskService taskService, IProjectMemberService projectMemberService, UserManager<ApplicationUser> userManager) : Controller
+    public class TasksController(IProjectService projectService, ITaskService taskService, IProjectMemberService projectMemberService,
+        ILogger<TasksController> logger, UserManager<ApplicationUser> userManager) : Controller
     {
         private readonly IProjectService _projectService = projectService;
         private readonly ITaskService _taskService = taskService;
-        private readonly IProjectMemberService _projectMemberService = projectMemberService;
+        private readonly ILogger<TasksController> _logger = logger;
         private readonly UserManager<ApplicationUser> _userManager = userManager;
 
         [HttpGet]
@@ -28,16 +29,25 @@ namespace FlowForge.UI.Controllers
             {
                 return BadRequest("User not found");
             }
-            var tasks = await _taskService.GetAllProjectTasks(user.Id, projectId);
-            ViewBag.projectId = projectId;
-            var members = await _projectService.GetProjectMembers(projectId);
-            ViewBag.members = members;
-            if (tasks == null)
-            {
-                return BadRequest("Error");
-            }
 
-            return View(tasks);
+            try
+            {
+                var tasks = await _taskService.GetAllProjectTasks(user.Id, projectId);
+                if (tasks == null)
+                {
+                    return BadRequest("Error");
+                }
+
+                ViewBag.projectId = projectId;
+                var members = await _projectService.GetProjectMembers(projectId);
+                ViewBag.members = members;
+                return View(tasks);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching tasks for project {ProjectId} for user {UserId}", projectId, user.Id);
+                return BadRequest("Error fetching tasks");
+            }   
         }
 
         [HttpGet]
@@ -299,5 +309,25 @@ namespace FlowForge.UI.Controllers
             await _taskService.AssignTask(assignRequest);
             return Ok("Task assigned successfully");
         }
+
+            [HttpPost]
+            [Route("[action]")]
+            public async Task<IActionResult> ReorderTasks([FromBody] ReorderRequest reorderRequest)
+            {
+                var user = await _userManager.FindByEmailAsync(User.Identity.Name);
+                if (user == null)
+                {
+                    return Unauthorized("User not found");
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    ModelState.AddModelError("ReorderTasks", "Invalid reorder request");
+                    return View("Tasks", await _taskService.GetAllProjectTasks(user.Id, reorderRequest.ProjectId));
+                }
+
+                await _taskService.ReorderTask(reorderRequest, user.Id);
+                return Ok("Tasks reordered successfully");
+            }
     }
 }

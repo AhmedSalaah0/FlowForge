@@ -70,7 +70,10 @@
         {
             <div class="card bg-dark text-white shadow-sm p-3 border border-secondary rounded-4" style="min-width: 50vh; flex: 0 0 auto;">
                 <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
-                    <h5 class="text-info m-0">@s.SectionName</h5>
+                    <h5 class="text-info m-0 editable-section" data-section-id="@s.SectionId" data-project-id="@s.ProjectId">
+                        @s.SectionName
+                    </h5>
+
                     <a asp-controller="Sections" asp-action="DeleteSection" asp-route-sectionId="@s.SectionId" asp-route-projectId="@s.ProjectId"
                        class="btn btn-sm btn-outline-danger" title="Delete Section">
                         <i class="fas fa-trash-alt"></i>
@@ -78,132 +81,133 @@
                 </div>
 
                 <div class="task-list" id="section-@s.SectionId" data-section-id="@s.SectionId" data-project-id="@s.ProjectId">
-                @foreach (var task in s.Tasks)
-                {
-                    <div class="task-card mb-3 p-3 rounded-3 shadow-sm bg-dark text-light position-relative" data-task-id="@task.TaskId">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="form-check mt-1">
-                                <input class="form-check-input" type="checkbox"
-                                       id="taskCheck_@task.TaskId"
-                                       data-status="@task.Status.ToString()"
-                                       data-project-id = "@task.ProjectId"
-                                       data-task-id="@task.TaskId"
-                                       @(task.Status == ProjectTaskStatus.Completed ? "checked" : "") />
-                            </div>
 
-                            <div class="ms-2 flex-grow-1">
-                                <div class="fw-semibold @(task.Status == ProjectTaskStatus.Completed ? "text-decoration-line-through text-secondary" : "")">
-                                    @task.Title
+                    @foreach (var task in s.Tasks.OrderBy(o => o.Order).ThenBy(o => o.Status))
+                    {
+                        <div class="task-card mb-3 p-3 rounded-3 shadow-sm bg-dark text-light position-relative" data-task-id="@task.TaskId">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="form-check mt-1">
+                                    <input class="form-check-input" type="checkbox"
+                                           id="taskCheck_@task.TaskId"
+                                           data-status="@task.Status.ToString()"
+                                           data-project-id = "@task.ProjectId"
+                                           data-task-id="@task.TaskId"
+                                           @(task.Status == ProjectTaskStatus.Completed ? "checked" : "") />
                                 </div>
 
-                                @if (!string.IsNullOrWhiteSpace(task.Description))
-                                {
-                                    <div class="small text-muted">@task.Description</div>
-                                }
-
-                                @if (task.ScheduleDateTime.HasValue)
-                                {
-                                    <div class="small text-warning mt-1">
-                                        <i class="fas fa-clock me-1"></i>@task.ScheduleDateTime?.ToString("dd MMM yyyy hh:mm tt")
+                                <div class="ms-2 flex-grow-1">
+                                    <div class="fw-semibold @(task.Status == ProjectTaskStatus.Completed ? "text-decoration-line-through text-secondary" : "")">
+                                        @task.Title
                                     </div>
-                                }
-                            </div>
 
-                            <div class="dropdown ms-2" data-bs-display="static">
-                            <button class="btn btn-outline-info btn-sm" type="button" id="taskMenuButton-@task.TaskId"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
+                                    @if (!string.IsNullOrWhiteSpace(task.Description))
+                                    {
+                                        <div class="small text-muted">@task.Description</div>
+                                    }
 
-                            <ul class="dropdown-menu" aria-labelledby="taskMenuButton-@task.TaskId">
-                                <li>
-                                    <a class="dropdown-item"
-                                       asp-controller="Tasks" asp-action="EditTask"
-                                       asp-route-projectId="@task.ProjectId" asp-route-taskId="@task.TaskId">
-                                        <i class="fas fa-pen me-2"></i> Edit Task
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item text-danger"
-                                       asp-controller="Tasks" asp-action="DeleteTask"
-                                       asp-route-projectId="@task.ProjectId" asp-route-taskId="@task.TaskId">
-                                        <i class="fas fa-trash-alt me-2"></i> Delete Task
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
+                                    @if (task.ScheduleDateTime.HasValue)
+                                    {
+                                        <div class="small text-warning mt-1">
+                                            <i class="fas fa-clock me-1"></i>@task.ScheduleDateTime?.ToString("dd MMM yyyy hh:mm tt")
+                                        </div>
+                                    }
+                                </div>
 
-                        </div>
-
-                        <div class="d-flex gap-2 mt-3">
-
-                                <div class="dropdown" data-bs-display="static">
-                                <button id="selectedStatus_@task.TaskId" class="btn btn-sm d-flex align-items-center gap-2 px-2 py-1 rounded-2 border border-secondary text-light"
-                                        type="button"
-                                        data-bs-display="static"
-                                        data-bs-toggle="dropdown"
-                                        aria-expanded="false"
-                                        data-status="@task.Status.ToString()"
-                                        style="font-size: 0.8rem;">
-                                    <span class="status-dot"
-                                          style="width: 10px; height: 10px; border-radius: 50%; display: inline-block;
-                                          background-color:@(task.Status == ProjectTaskStatus.Pending ? "#ffc107" :
-                                                            task.Status == ProjectTaskStatus.In_Progress ? "#0d6efd" :
-                                                            task.Status == ProjectTaskStatus.Completed ? "#198754" : "#6c757d");">
-                                    </span>
-                                    <span class="fw-semibold">@task.Status.ToString().Replace("_", " ")</span>
-                                    <i class="fas fa-chevron-down ms-1 small"></i>
+                                <div class="dropdown ms-2" data-bs-display="static">
+                                <button class="btn btn-outline-info btn-sm" type="button" id="taskMenuButton-@task.TaskId"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v"></i>
                                 </button>
 
-                                    <ul class="dropdown-menu bg-secondary shadow-sm">
-                                    @foreach (var status in Enum.GetValues(typeof(ProjectTaskStatus)).Cast<ProjectTaskStatus>())
-                                    {
-                                        <li>
-                                            <button type="button"
-                                                    class="dropdown-item d-flex align-items-center gap-2 status-option @(status == task.Status ? "active" : "")"
-                                                    data-task-id="@task.TaskId"
-                                                    data-project-id ="@task.ProjectId"
-                                                    data-status="@status">
-                                                    <span class="status-dot" style="background-color:@(status == ProjectTaskStatus.Pending ? "#ffc107" :
-                                                                        status == ProjectTaskStatus.In_Progress ? "#0d6efd" :
-                                                                        status == ProjectTaskStatus.Completed ? "#198754" : "#6c757d");">
-                                                </span>
-                                                @status.ToString().Replace("_", " ")
-                                            </button>
-                                        </li>
-                                    }
+                                <ul class="dropdown-menu" aria-labelledby="taskMenuButton-@task.TaskId">
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Tasks" asp-action="EditTask"
+                                           asp-route-projectId="@task.ProjectId" asp-route-taskId="@task.TaskId">
+                                            <i class="fas fa-pen me-2"></i> Edit Task
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item text-danger"
+                                           asp-controller="Tasks" asp-action="DeleteTask"
+                                           asp-route-projectId="@task.ProjectId" asp-route-taskId="@task.TaskId">
+                                            <i class="fas fa-trash-alt me-2"></i> Delete Task
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
 
-                            <div class="dropdown">
-                                <button id="Assignee_@task.TaskId" class="btn btn-sm d-flex align-items-center gap-2 px-2 py-1 rounded-2 border border-secondary text-light"
-                                        type="button"
-                                        data-bs-toggle="dropdown"
-                                        aria-expanded="false"
-                                        style="font-size: 0.8rem;">
-                                    <span id="Assignee-span-@task.TaskId">@(task.Assignee?.Member.PersonName ?? "Unassigned")</span>
-                                    <i class="fas fa-user ms-1 small" aria-hidden="true"></i>
-                                </button>
+                            </div>
 
-                                    <ul class="dropdown-menu bg-secondary shadow-sm">
-                                    @foreach (var person in task.Project.ProjectMembers)
-                                    {
-                                        <li>
-                                            <button type="button"
-                                                    class="dropdown-item d-flex align-items-center gap-2 assignee-option @(task.Assignee?.MemberId == person.MemberId ? "active" : "")"
-                                                    data-task-id="@task.TaskId"
-                                                    data-project-id = "@task.ProjectId"
-                                                    data-assignee-id="@person.MemberId"
-                                                    data-old-assinee-id ="@task.AssigneeId"
-                                                     id="assignee-name-@person.MemberId">
-                                                @person.Member.PersonName
-                                            </button>
-                                        </li>
-                                    }
-                                </ul>
+                            <div class="d-flex gap-2 mt-3">
+
+                                    <div class="dropdown" data-bs-display="static">
+                                    <button id="selectedStatus_@task.TaskId" class="btn btn-sm d-flex align-items-center gap-2 px-2 py-1 rounded-2 border border-secondary text-light"
+                                            type="button"
+                                            data-bs-display="static"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false"
+                                            data-status="@task.Status.ToString()"
+                                            style="font-size: 0.8rem;">
+                                        <span class="status-dot"
+                                              style="width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+                                              background-color:@(task.Status == ProjectTaskStatus.Pending ? "#ffc107" :
+                                                                task.Status == ProjectTaskStatus.In_Progress ? "#0d6efd" :
+                                                                task.Status == ProjectTaskStatus.Completed ? "#198754" : "#6c757d");">
+                                        </span>
+                                        <span class="fw-semibold">@task.Status.ToString().Replace("_", " ")</span>
+                                        <i class="fas fa-chevron-down ms-1 small"></i>
+                                    </button>
+
+                                        <ul class="dropdown-menu bg-secondary shadow-sm">
+                                        @foreach (var status in Enum.GetValues(typeof(ProjectTaskStatus)).Cast<ProjectTaskStatus>())
+                                        {
+                                            <li>
+                                                <button type="button"
+                                                        class="dropdown-item d-flex align-items-center gap-2 status-option @(status == task.Status ? "active" : "")"
+                                                        data-task-id="@task.TaskId"
+                                                        data-project-id ="@task.ProjectId"
+                                                        data-status="@status">
+                                                        <span class="status-dot" style="background-color:@(status == ProjectTaskStatus.Pending ? "#ffc107" :
+                                                                            status == ProjectTaskStatus.In_Progress ? "#0d6efd" :
+                                                                            status == ProjectTaskStatus.Completed ? "#198754" : "#6c757d");">
+                                                    </span>
+                                                    @status.ToString().Replace("_", " ")
+                                                </button>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+
+                                <div class="dropdown">
+                                    <button id="Assignee_@task.TaskId" class="btn btn-sm d-flex align-items-center gap-2 px-2 py-1 rounded-2 border border-secondary text-light"
+                                            type="button"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false"
+                                            style="font-size: 0.8rem;">
+                                        <span id="Assignee-span-@task.TaskId">@(task.Assignee?.Member.PersonName ?? "Unassigned")</span>
+                                        <i class="fas fa-user ms-1 small" aria-hidden="true"></i>
+                                    </button>
+
+                                        <ul class="dropdown-menu bg-secondary shadow-sm">
+                                        @foreach (var person in task.Project.ProjectMembers)
+                                        {
+                                            <li>
+                                                <button type="button"
+                                                        class="dropdown-item d-flex align-items-center gap-2 assignee-option @(task.Assignee?.MemberId == person.MemberId ? "active" : "")"
+                                                        data-task-id="@task.TaskId"
+                                                        data-project-id = "@task.ProjectId"
+                                                        data-assignee-id="@person.MemberId"
+                                                        data-old-assinee-id ="@task.AssigneeId"
+                                                         id="assignee-name-@person.MemberId">
+                                                    @person.Member.PersonName
+                                                </button>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
                             </div>
                         </div>
-                    </div>
                 }
                 </div>
 
@@ -236,6 +240,71 @@
 @section Scripts {
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+                function attachEditable(h5) {
+                    h5.addEventListener("click", function () {
+                        const sectionId = this.dataset.sectionId;
+                        const projectId = this.dataset.projectId;
+                        const text = this.innerText;
+
+                        const input = document.createElement("input");
+                        input.type = "text";
+                        input.value = text;
+                        input.className = "form-control form-control-sm";
+                        input.style.width = "auto";
+
+                        this.replaceWith(input);
+                        input.focus();
+
+                        const save = () => {
+                            const newName = input.value.trim();
+                            if (newName && newName !== text) {
+                                fetch(`/Sections/EditSectionName`, {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+                                    },
+                                    body: JSON.stringify({
+                                        SectionId: sectionId,
+                                        ProjectId: projectId,
+                                        SectionName: newName
+                                    })
+                                })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        input.replaceWith(createH5(newName, sectionId, projectId));
+                                    } else {
+                                        alert("Error updating section name");
+                                        input.replaceWith(createH5(text, sectionId, projectId));
+                                    }
+                                });
+                            } else {
+                                input.replaceWith(createH5(text, sectionId, projectId));
+                            }
+                        };
+
+                        input.addEventListener("blur", save);
+                        input.addEventListener("keydown", e => {
+                            if (e.key === "Enter") {
+                                save();
+                            }
+                        });
+                    });
+                }
+
+                function createH5(text, sectionId, projectId) {
+                    const h5 = document.createElement("h5");
+                    h5.className = "text-info m-0 editable-section";
+                    h5.dataset.sectionId = sectionId;
+                    h5.dataset.projectId = projectId;
+                    h5.innerText = text;
+                    attachEditable(h5);
+                    return h5;
+                }
+
+                document.querySelectorAll(".editable-section").forEach(attachEditable);
+
             var dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
             var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
                 return new bootstrap.Dropdown(dropdownToggleEl);
@@ -420,7 +489,28 @@
                 console.log(`Project ID: ${projectId}`);
 
                 if (oldSectionId === newSectionId) {
-                    console.log("Task dropped in the same section. No API call.");
+                    const taskIds = [...evt.to.querySelectorAll(".task-card")]
+                    .map(t => t.dataset.taskId);
+
+                    try {
+                        const response = await fetch("/Tasks/ReorderTasks", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+                            },
+                            body: JSON.stringify({
+                                SectionId: newSectionId,
+                                ProjectId: projectId,
+                                TaskIds: taskIds
+                            })
+                        });
+
+                        if (!response.ok) throw new Error("Failed to reorder tasks.");
+                        console.log("✅ Reorder saved", taskIds);
+                    } catch (err) {
+                        alert(err.message);
+                    }
                     return;
                 }
 

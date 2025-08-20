@@ -19,7 +19,7 @@ namespace FlowForge.UI.Controllers
 
         [Route("/")]
         public async Task<IActionResult> Index()
-            {
+        {
             ApplicationUser user = await _userManager.FindByNameAsync(User.Identity.Name);
             var Tasks = await _projectService.GetProjects(user.Id);
 

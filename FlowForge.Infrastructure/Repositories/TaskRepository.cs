@@ -80,4 +80,14 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
         _context.Entry(task).State = EntityState.Modified;
         return _context.SaveChangesAsync().ContinueWith(_ => task);
     }
+
+    public void UpdateTaskOrder(ProjectTask task)
+    {
+        _context.Entry(task).State = EntityState.Modified;
+    }
+
+    public Task SaveChangesAsync()
+    {
+        return _context.SaveChangesAsync();
+    }
 }

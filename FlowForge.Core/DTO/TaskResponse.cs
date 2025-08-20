@@ -18,6 +18,8 @@ public class TaskResponse
     public Guid ProjectId { get; set; }
     public ProjectMember Assignee { get; set; }
     public ProjectTaskStatus Status { get; set; }
+    public int? Order { get; set; }
+
     public override bool Equals(object? obj)
     {
         if (obj is not TaskResponse taskResponse)

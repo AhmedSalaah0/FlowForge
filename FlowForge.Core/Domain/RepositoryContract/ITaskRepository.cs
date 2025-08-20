@@ -15,4 +15,7 @@ public interface ITaskRepository
     Task<bool> UpdateTaskStatus(Guid? taskId, ProjectTaskStatus status);
     Task<bool> MoveTask(ProjectTask task, Guid NewSectionId);
     Task<ProjectTask> AssignTask(ProjectTask task, Guid MemberId);
+    void UpdateTaskOrder(ProjectTask task);
+
+    Task SaveChangesAsync();
 }

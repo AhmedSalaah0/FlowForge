@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews(options =>
 {
@@ -22,6 +23,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.EnableSensitiveDataLogging();
     options.EnableDetailedErrors();
 });
+
+var logPath = Path.Combine(builder.Environment.ContentRootPath, "App_Data", "app.log");
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.File(logPath, rollingInterval: RollingInterval.Day)
+    .MinimumLevel.Error()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 {

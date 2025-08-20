@@ -52,6 +52,26 @@ namespace FlowForge.Core.Services
             }
         }
 
+        public async Task<SectionResponse> EditSectionName(Guid userId, SectionUpdateRequest sectionUpdateRequest)
+        {
+            ArgumentNullException.ThrowIfNull(sectionUpdateRequest);
+
+            var project = await projectService.GetProjectById(userId, sectionUpdateRequest.ProjectId) 
+                ?? throw new KeyNotFoundException("Project not found");
+
+            if (project.ProjectMembers.FirstOrDefault(u => u.MemberId == userId)?.MemberRole == Enums.ProjectRole.Member)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to edit section names in this project.");
+            }
+
+            var section = await _sectionRepository.GetProjectSectionById(sectionUpdateRequest.SectionId) ?? throw new KeyNotFoundException($"{nameof(SectionService)}.{nameof(EditSectionName)}", new Exception("Invalid section Id"));
+
+            section.SectionName = sectionUpdateRequest.SectionName ?? throw new ArgumentNullException(nameof(sectionUpdateRequest.SectionName), "Section name cannot be null or empty");
+            
+            var updatedSection = await _sectionRepository.EditSectionName(section) ?? throw new InvalidOperationException("Failed to update section name");
+            return updatedSection.ToSectionResponse();
+        }
+
         public Task<List<SectionWithTasksResponse>> GetAllProjectSections(Guid userId, Guid projectId)
         {
             throw new NotImplementedException();

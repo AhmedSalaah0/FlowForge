@@ -57,6 +57,24 @@ namespace FlowForge.UI.Controllers
             await _sectionService.DeleteSection(user.Id, sectionId);
             return RedirectToAction("Tasks", "Tasks", new { projectId });
         }
-
+            
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<IActionResult> EditSectionName([FromBody] SectionUpdateRequest sectionUpdateRequest)
+        {
+            if (!ModelState.IsValid)
+            {
+                ModelState.AddModelError("Edit Section", "Invalid Section ID or Name");
+                return RedirectToAction("Tasks", "Tasks");
+            }
+            var user = await _userManager.FindByEmailAsync(User.Identity?.Name);
+            if (user is null)
+            {
+                ModelState.AddModelError("User", "User not Found");
+                return RedirectToAction("Tasks", "Tasks");
+            }
+            await _sectionService.EditSectionName(user.Id, sectionUpdateRequest);
+            return Ok(new { success = true, message = "Section name updated successfully." });
+        }
     }
 }
