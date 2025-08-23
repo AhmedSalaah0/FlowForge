@@ -1,5 +1,6 @@
 using FlowForge.Core.Domain.IdentityEntities;
 using FlowForge.Core.Domain.RepositoryContract;
+using FlowForge.Core.DTO;
 using FlowForge.Core.ServiceContracts;
 using FlowForge.Core.Services;
 using FlowForge.Infrastructure.DatabaseContext;
@@ -8,6 +9,7 @@ using FlowForge.UI.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -52,6 +54,9 @@ builder.Services.ConfigureApplicationCookie(options => {
     options.LoginPath = "/Account/Login";
 });
 
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<ISectionRepository, SectionRepository>();
@@ -62,6 +67,7 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ISectionService, SectionService>();
 builder.Services.AddScoped<IProjectMemberService, ProjectMemberService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddTransient<IEmailSender, EmailService>();
 
 var app = builder.Build();
 

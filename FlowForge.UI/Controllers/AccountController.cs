@@ -2,23 +2,24 @@ using FlowForge.Core.Domain.IdentityEntities;
 using FlowForge.Core.DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.IdentityModel.Tokens;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace FlowForge.UI.Controllers
 {
     [Controller]
     [Route("[controller]/[action]")]
     [AllowAnonymous]
-    public class AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager) : Controller
+    public class AccountController(UserManager<ApplicationUser> _userManager, SignInManager<ApplicationUser> _signInManager, IEmailSender sender) : Controller
     {
-        private readonly UserManager<ApplicationUser> _userManager = userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
 
         [HttpGet]
         public IActionResult Login()
         {
-            // If user is already logged in, redirect to Projects page
             if (_signInManager.IsSignedIn(User))
             {
                 return RedirectToAction("Index", "Projects");
@@ -27,7 +28,7 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(LoginDTO loginDTO)
+        public async Task<IActionResult> Login(LoginDTO loginDTO, string? ReturnUrl)
         {
             if (!ModelState.IsValid)
             {
@@ -43,6 +44,10 @@ namespace FlowForge.UI.Controllers
             var result = await _signInManager.PasswordSignInAsync(user, loginDTO.Password, loginDTO.RememberMe, false);
             if (result.Succeeded)
             {
+                if (!ReturnUrl.IsNullOrEmpty() && Url.IsLocalUrl(ReturnUrl))
+                {
+                    return LocalRedirect(ReturnUrl); 
+                }
                 return RedirectToAction("Index", "Projects");
             }
             else
@@ -55,7 +60,6 @@ namespace FlowForge.UI.Controllers
         [HttpGet]
         public IActionResult Register()
         {
-            // If user is already logged in, redirect to Projects page
             if (_signInManager.IsSignedIn(User))
             {
                 return RedirectToAction("Index", "Projects");
@@ -110,33 +114,78 @@ namespace FlowForge.UI.Controllers
             return RedirectToAction("Login", "Account");
         }
 
-        //[HttpPost]
-        //public async Task<IActionResult> ResetPassword(ResetPasswordDTO resetPasswordDTO)
-        //{
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return View(resetPasswordDTO);
-        //    }
-        //    var user = await _userManager.FindByEmailAsync(resetPasswordDTO.Email);
-        //    if (user == null)
-        //    {
-        //        ModelState.AddModelError("Email", "User not found");
-        //        return View(resetPasswordDTO);
-        //    }
-        //    var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-        //    var result = await _userManager.ResetPasswordAsync(user, resetToken, resetPasswordDTO.NewPassword);
-        //    if (result.Succeeded)
-        //    {
-        //        return RedirectToAction("Login", "Account");
-        //    }
-        //    else
-        //    {
-        //        foreach (var error in result.Errors)
-        //        {
-        //            ModelState.AddModelError("", error.Description);
-        //        }
-        //        return View(resetPasswordDTO);
-        //    }
-        //}
+        [HttpGet("[action]")]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<IActionResult> ForgotPassword(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                ModelState.AddModelError("Forgot Password", "you are not register yet");
+                return View();
+            }
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebUtility.UrlEncode(token);
+            var resetLink = $"https://flowforge.runasp.net/Account/ResetPassword?token={encodedToken}&email={email}";
+            try
+            {
+                await sender.SendEmailAsync(email, "Reset Password", $"Please reset your password by clicking here: <a href=\"{resetLink}\">link</a>");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("Email Sending Failed", ex.Message);
+                return View();
+            }
+            ViewBag.Message = "Reset password link has been sent to your email.";
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ResetPassword(string token, string email)
+        {
+            if (token == null || email == null)
+            {
+                return BadRequest("Invalid user or token is expired");
+            }
+            var resetPasswordDTO = new ResetPasswordDTO { Email = email, token = token };
+            return View(resetPasswordDTO);
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordDTO resetPasswordDTO)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(resetPasswordDTO);
+            }
+
+            var user = await _userManager.FindByEmailAsync(resetPasswordDTO.Email);
+            if (user == null)
+            {
+                ModelState.AddModelError("Email", "User not found");
+                return View(resetPasswordDTO);
+            }
+
+            var result = await _userManager.ResetPasswordAsync(user, resetPasswordDTO.token, resetPasswordDTO.Password);
+            if (result.Succeeded)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError("", error.Description);
+                }
+                return View(resetPasswordDTO);
+            }
+        }
     }
 }

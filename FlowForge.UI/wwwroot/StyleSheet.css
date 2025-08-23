@@ -192,9 +192,15 @@ li::marker {
     display: flex;
     flex-wrap: wrap;
     gap: 1.5rem;
-    align-items: flex-start;
+    align-items: stretch;
     justify-content: flex-start;
 }
+
+    .flex-wrap-fix .card {
+        flex: 1 1 320px; 
+        max-width: 400px;
+        min-width: 280px;
+    }
 
 .card {
     background-color: var(--card-bg);
@@ -343,6 +349,17 @@ li::marker {
     .view-all-btn:hover {
         background: rgba(255,255,255,0.1);
     }
+
+@media (max-width: 768px) {
+    .flex-wrap-fix {
+        flex-direction: column; 
+    }
+
+        .flex-wrap-fix .card {
+            width: 100%;
+            max-width: none;
+        }
+}
 
 @media (max-width: 576px) {
     .notification-dropdown {
