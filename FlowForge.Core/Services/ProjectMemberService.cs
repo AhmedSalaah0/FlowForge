@@ -2,17 +2,16 @@
 using FlowForge.Core.Domain.RepositoryContract;
 using FlowForge.Core.DTO;
 using FlowForge.Core.Enums;
+using FlowForge.Core.Hubs;
 using FlowForge.Core.ServiceContracts;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace FlowForge.Core.Services
 {
-    public class ProjectMemberService(IProjectRepository projectRepository, IProjectMemberRepository projectMemberRepository, INotificationService notificationService) : IProjectMemberService
+    public class ProjectMemberService(IProjectRepository projectRepository, IProjectMemberRepository projectMemberRepository, INotificationService notificationService, IHubContext<NotificationHub> notificationHub) : IProjectMemberService
     {
-        private readonly IProjectRepository _projectRepository = projectRepository;
-        private readonly IProjectMemberRepository _projectMemberRepository = projectMemberRepository;
-        private readonly INotificationService _notificationService = notificationService;
         public async Task<bool> SendJoinRequest(ProjectJoinRequest projectJoinRequest)
         {
             ArgumentNullException.ThrowIfNull(projectJoinRequest);
@@ -21,13 +20,13 @@ namespace FlowForge.Core.Services
             {
                 throw new ArgumentException("Invalid Project.");
             }
-            var alreadyExists = (await _projectRepository.GetProjectMembers(projectJoinRequest.ProjectId))
+            var alreadyExists = (await projectRepository.GetProjectMembers(projectJoinRequest.ProjectId))
                 .Any(t => t.MemberId == projectJoinRequest.AddedUserId);
 
 
             if (!alreadyExists)
             {
-                var existingProject = await _projectRepository.GetProjectById(projectJoinRequest.AddingUserId, projectJoinRequest.ProjectId) ?? throw new ArgumentException("Project not found.");
+                var existingProject = await projectRepository.GetProjectById(projectJoinRequest.AddingUserId, projectJoinRequest.ProjectId) ?? throw new ArgumentException("Project not found.");
 
                 var projectMember = new ProjectMember
                 {
@@ -50,8 +49,8 @@ namespace FlowForge.Core.Services
                     Sender = projectJoinRequest.AddingUser,
                     Receiver = projectJoinRequest.AddedUser,
                 };
-                await _projectMemberRepository.AddProjectMember(projectMember);
-                bool result = await _notificationService.SendNotification(notification);
+                await projectMemberRepository.AddProjectMember(projectMember);
+                bool result = await notificationService.SendNotification(notification);
                 return result;
             }
             return false;
@@ -62,7 +61,7 @@ namespace FlowForge.Core.Services
             {
                 throw new ArgumentException("Invalid Remove Attempts");
             }
-            var projectMembers = await _projectRepository.GetProjectMembers(projectId);
+            var projectMembers = await projectRepository.GetProjectMembers(projectId);
 
             var memberToRemove = projectMembers.FirstOrDefault(pm => pm.MemberId == memberId && pm.ProjectId == projectId);
             if (memberToRemove == null)
@@ -79,17 +78,17 @@ namespace FlowForge.Core.Services
                 throw new UnauthorizedAccessException("Cannot remove the project creator.");
             }
 
-            await _projectMemberRepository.RemoveProjectMember(memberToRemove);
+            await projectMemberRepository.RemoveProjectMember(memberToRemove);
             try
             {
-                var notification = (await _notificationService.GetNotifications(memberId))?.FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == memberId).NotificationId;
-                await _notificationService.DeleteNotification(notification ?? Guid.Empty);
+                var notification = (await notificationService.GetNotifications(memberId))?.FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == memberId).NotificationId;
+                await notificationService.DeleteNotification(notification ?? Guid.Empty);
             }
             catch (Exception ex)
             {
                 throw new UnauthorizedAccessException("Failed to delete notification.", ex);
             }
-            await _notificationService.SendNotification(new Notification
+            await notificationService.SendNotification(new Notification
             {
                 NotificationId = Guid.NewGuid(),
                 SenderId = userId,
@@ -109,15 +108,15 @@ namespace FlowForge.Core.Services
             {
                 throw new ArgumentException("Invalid project or user ID.");
             }
-            var projectMember = await _projectRepository.GetProjectMemberById(projectId, userId);
+            var projectMember = await projectRepository.GetProjectMemberById(projectId, userId);
             if (projectMember == null)
             {
                 throw new ArgumentException("Project member not found.");
             }
-            await _projectMemberRepository.AcceptProjectMember(projectMember);
-            var notification = (await _notificationService.GetNotifications(userId))?.FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == userId);
+            await projectMemberRepository.AcceptProjectMember(projectMember);
+            var notification = (await notificationService.GetNotifications(userId))?.FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == userId);
 
-            await _notificationService.SendNotification(new Notification
+            await notificationService.SendNotification(new Notification
             {
                 NotificationId = Guid.NewGuid(),
                 SenderId = userId,
@@ -132,7 +131,7 @@ namespace FlowForge.Core.Services
 
             notification.NotificationType = NotificationType.INFO;
             notification.Message = $"you have been successfully added to the project {projectMember.Project.ProjectTitle}";
-            await _notificationService.EditNotification(notification);
+            await notificationService.EditNotification(notification);
 
             return true;
         }
@@ -143,16 +142,16 @@ namespace FlowForge.Core.Services
             {
                 throw new ArgumentException("Invalid project or user ID.");
             }
-            var projectMember = _projectRepository.GetProjectMembers(projectId).Result.FirstOrDefault(pm => pm.MemberId == userId && pm.ProjectId == projectId);
+            var projectMember = projectRepository.GetProjectMembers(projectId).Result.FirstOrDefault(pm => pm.MemberId == userId && pm.ProjectId == projectId);
             if (projectMember == null)
             {
                 throw new ArgumentException("Project member not found.");
             }
-            await _projectMemberRepository.RejectProjectMember(projectMember);
-            var notification = (await _notificationService.GetNotifications(userId))?.FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == userId);
+            await projectMemberRepository.RejectProjectMember(projectMember);
+            var notification = (await notificationService.GetNotifications(userId))?.FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == userId);
 
 
-            await _notificationService.SendNotification(new Notification
+            await notificationService.SendNotification(new Notification
             {
                 NotificationId = Guid.NewGuid(),
                 SenderId = userId,
@@ -167,7 +166,7 @@ namespace FlowForge.Core.Services
 
             notification.NotificationType = NotificationType.INFO;
             notification.Message = $"You have been reject to join the project {projectMember.Project.ProjectTitle}";
-            await _notificationService.EditNotification(notification);
+            await notificationService.EditNotification(notification);
             return true;
         }
     }

@@ -107,5 +107,19 @@ namespace FlowForge.Infrastructure.Repositories
             await _context.SaveChangesAsync();
             return notification;
         }
+
+        public Task<bool> DeleteAllNotifications(IEnumerable<Notification> notifications)
+        {
+            _context.Notifications.RemoveRange(notifications);
+            try
+            {
+                return _context.SaveChangesAsync().ContinueWith(t => t.IsCompletedSuccessfully);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting all notifications: {Message}", ex.Message);
+                return Task.FromResult(false);
+            }
+        }
     }
 }

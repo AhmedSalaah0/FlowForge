@@ -9,6 +9,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowForge.Infrastructure", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowForge.UI", "FlowForge.UI\FlowForge.UI.csproj", "{61AA248A-BFE2-B264-72A6-56EAB2E147BD}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{6A734E75-0358-4CFB-8D4C-98242A5670A8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowForge.ServiceTests", "FlowForge.ServiceTests\FlowForge.ServiceTests.csproj", "{9C1E46D3-89D8-442E-ACBB-FB2FBE15AE99}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,9 +33,19 @@ Global
 		{61AA248A-BFE2-B264-72A6-56EAB2E147BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{61AA248A-BFE2-B264-72A6-56EAB2E147BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{61AA248A-BFE2-B264-72A6-56EAB2E147BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C1E46D3-89D8-442E-ACBB-FB2FBE15AE99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C1E46D3-89D8-442E-ACBB-FB2FBE15AE99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C1E46D3-89D8-442E-ACBB-FB2FBE15AE99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C1E46D3-89D8-442E-ACBB-FB2FBE15AE99}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2EDF290A-BB4B-9485-9430-FB4E80A2EE24} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{57F8E2D1-09D5-A031-799D-EAC54B6F74B5} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{61AA248A-BFE2-B264-72A6-56EAB2E147BD} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{9C1E46D3-89D8-442E-ACBB-FB2FBE15AE99} = {6A734E75-0358-4CFB-8D4C-98242A5670A8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8AA35DB4-DEA3-419C-A533-3C1291696B28}

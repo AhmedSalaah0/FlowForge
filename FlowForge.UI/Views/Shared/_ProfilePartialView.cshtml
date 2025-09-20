@@ -1,0 +1,17 @@
+﻿@model ApplicationUser
+
+<li class="px-3 py-2">
+    <div id="user-name" class="fw-semibold text-white">@Model.PersonName</div>
+    <div class="text-secondary small">@Model.Email</div>
+</li>
+
+<li><hr class="dropdown-divider border-secondary"></li>
+
+<li>
+    <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="dropdown-item text-danger d-flex align-items-center">
+            <i class="fas fa-sign-out-alt me-2"></i> Logout
+        </button>
+    </form>
+</li>

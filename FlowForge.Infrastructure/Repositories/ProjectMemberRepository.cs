@@ -3,6 +3,7 @@ using FlowForge.Core.Domain.RepositoryContract;
 using FlowForge.Core.DTO;
 using FlowForge.Core.Enums;
 using FlowForge.Infrastructure.DatabaseContext;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,10 +34,20 @@ namespace FlowForge.Infrastructure.Repositories
             return _context.SaveChangesAsync();
         }
 
-        public Task<bool> RemoveProjectMember(ProjectMember projectMember)
+        public async Task<bool> RemoveProjectMember(ProjectMember projectMember)
         {
+            var tasks = await _context.Tasks
+            .Where(t => t.AssigneeId == projectMember.MemberId && t.ProjectId == projectMember.ProjectId)
+            .ToListAsync();
+
+            foreach (var task in tasks)
+            {
+                task.AssigneeId = null;
+            }
+
             _context.ProjectMembers.Remove(projectMember);
-            return _context.SaveChangesAsync().ContinueWith(t => t.Result > 0);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

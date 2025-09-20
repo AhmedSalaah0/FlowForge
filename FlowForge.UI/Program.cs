@@ -1,6 +1,7 @@
 using FlowForge.Core.Domain.IdentityEntities;
 using FlowForge.Core.Domain.RepositoryContract;
 using FlowForge.Core.DTO;
+using FlowForge.Core.Hubs;
 using FlowForge.Core.ServiceContracts;
 using FlowForge.Core.Services;
 using FlowForge.Infrastructure.DatabaseContext;
@@ -14,6 +15,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddSignalR(options => {
+    options.EnableDetailedErrors = true;
+    options.MaximumReceiveMessageSize = 102400; // 100 KB
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+});
 builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
@@ -47,10 +55,23 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 
     .AddRoleStore<RoleStore<ApplicationRole, ApplicationDbContext, Guid>>();
 
-builder.Services.AddAuthorizationBuilder()
-    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
 
-builder.Services.ConfigureApplicationCookie(options => {
+    options.AddPolicy("NotAuthenticated", policy =>
+    {
+        policy.RequireAssertion(context => { 
+            return !context.User.Identity.IsAuthenticated;
+        });
+    });
+});
+
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
     options.LoginPath = "/Account/Login";
 });
 
@@ -67,9 +88,11 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ISectionService, SectionService>();
 builder.Services.AddScoped<IProjectMemberService, ProjectMemberService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IReorderTaskService, ReorderTaskService>();
 builder.Services.AddTransient<IEmailSender, EmailService>();
 
 var app = builder.Build();
+
 
 if (app.Environment.IsDevelopment())
 {
@@ -84,6 +107,7 @@ else
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapHub<NotificationHub>("/notification-hub");
 
 app.MapControllers();
 

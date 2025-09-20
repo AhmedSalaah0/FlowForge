@@ -1,0 +1,65 @@
+﻿@model Notification
+
+<div class="dropdown-item text-white border-bottom border-secondary notification-item
+            @(!Model.IsRead ? "unread fw-bold" : "")">
+
+    <div class="mb-1 fw-semibold text-info notification-message">
+        @Model.Message
+    </div>
+
+    <small class="text-light d-block mb-2 notification-time">
+        <span class="d-none d-md-inline">
+            @Model.CreatedAt.ToLocalTime().ToString("g")
+        </span>
+        <span class="d-md-none">
+            @Model.CreatedAt.ToLocalTime().ToString("M/d h:mm tt")
+        </span>
+    </small>
+
+    @if (Model.NotificationType == NotificationType.JOIN_REQUEST)
+    {
+        <div class="notification-actions">
+            <form asp-controller="ProjectMembers"
+                  asp-action="AcceptInvite"
+                  asp-route-projectId="@Model.ProjectId"
+                  method="post"
+                  class="d-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-sm btn-outline-success action-btn">
+                    <i class="fas fa-check d-sm-none"></i>
+                    <span class="d-none d-sm-inline">Accept</span>
+                </button>
+            </form>
+
+            <form asp-controller="ProjectMembers"
+                  asp-action="RejectInvite"
+                  asp-route-projectId="@Model.ProjectId"
+                  method="post"
+                  class="d-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-sm btn-outline-danger action-btn">
+                    <i class="fas fa-times d-sm-none"></i>
+                    <span class="d-none d-sm-inline">Reject</span>
+                </button>
+            </form>
+        </div>
+    }
+
+    @{
+        var member = ((IEnumerable<ProjectMember>)Model.Project.ProjectMembers)
+        .FirstOrDefault(u => u.MemberId == Model.ReceiverId && u.ProjectId == Model.ProjectId);
+    }
+
+    @if (Model.NotificationType == NotificationType.INFO && member?.MembershipStatus == MembershipStatus.REJECTED)
+    {
+        <form asp-controller="ProjectMembers" asp-action="AcceptInvite" method="post" class="d-inline">
+            <input type="hidden" name="projectId" value="@Model.ProjectId" />
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-sm btn-outline-danger action-btn w-100">
+                <i class="fas fa-undo d-sm-none"></i>
+                <span class="d-none d-sm-inline">Undo Rejection</span>
+                <span class="d-sm-none">Undo</span>
+            </button>
+        </form>
+    }
+</div>

@@ -54,7 +54,8 @@ namespace FlowForge.UI.Controllers
             {
                 return BadRequest("User not found");
             }
-            await _projectService.CreateProject(projectAddRequest, user.Id);
+            projectAddRequest.CreatedById = user.Id;
+            await _projectService.CreateProject(projectAddRequest);
             return RedirectToAction("Index");
         }
 

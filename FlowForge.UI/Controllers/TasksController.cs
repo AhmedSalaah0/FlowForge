@@ -13,18 +13,13 @@ namespace FlowForge.UI.Controllers
     [Controller]
     [Route("[controller]")]
     //[Authorize]
-    public class TasksController(IProjectService projectService, ITaskService taskService, IProjectMemberService projectMemberService,
-        ILogger<TasksController> logger, UserManager<ApplicationUser> userManager) : Controller
+    public class TasksController(IProjectService projectService, ITaskService taskService, IProjectMemberService projectMemberService, IReorderTaskService reorderTaskService, ILogger<TasksController> logger, UserManager<ApplicationUser> userManager) : Controller
     {
-        private readonly IProjectService _projectService = projectService;
-        private readonly ITaskService _taskService = taskService;
-        private readonly ILogger<TasksController> _logger = logger;
-        private readonly UserManager<ApplicationUser> _userManager = userManager;
 
         [HttpGet]
         public async Task<IActionResult> Tasks(Guid projectId)
         {
-            var user = await _userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
             if (user == null)
             {
                 return BadRequest("User not found");
@@ -32,20 +27,20 @@ namespace FlowForge.UI.Controllers
 
             try
             {
-                var tasks = await _taskService.GetAllProjectTasks(user.Id, projectId);
+                var tasks = await taskService.GetAllProjectTasks(user.Id, projectId);
                 if (tasks == null)
                 {
                     return BadRequest("Error");
                 }
 
                 ViewBag.projectId = projectId;
-                var members = await _projectService.GetProjectMembers(projectId);
+                var members = (await projectService.GetProjectMembers(projectId)).Where(member => member.MembershipStatus == MembershipStatus.ACCEPTED);
                 ViewBag.members = members;
                 return View(tasks);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching tasks for project {ProjectId} for user {UserId}", projectId, user.Id);
+                logger.LogError(ex, "Error fetching tasks for project {ProjectId} for user {UserId}", projectId, user.Id);
                 return BadRequest("Error fetching tasks");
             }   
         }
@@ -67,12 +62,12 @@ namespace FlowForge.UI.Controllers
             {
                 return BadRequest();
             }
-            var user = await _userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
             if (user == null)
             {
                 ModelState.AddModelError("Add Task", "User Not Found");
             }
-            await _taskService.AddTask(user.Id, taskAddRequest);
+            await taskService.AddTask(user.Id, taskAddRequest);
             return RedirectToAction("Tasks", new
             {
                 projectId = taskAddRequest.ProjectId
@@ -83,7 +78,7 @@ namespace FlowForge.UI.Controllers
         [Route("ScheduleTask")]
         public async Task<IActionResult> ScheduleTask(Guid taskId, Guid projectId)
         {
-            var task = await _taskService.GetTaskById(projectId, taskId);
+            var task = await taskService.GetTaskById(projectId, taskId);
             if (task == null)
             {
                 ModelState.AddModelError("", "Task not found");
@@ -109,7 +104,7 @@ namespace FlowForge.UI.Controllers
                 ViewBag.Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
                 return View(request);
             }
-            var user = await _userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
             if (user == null)
             {
                 ModelState.AddModelError("", "User not found");
@@ -117,7 +112,7 @@ namespace FlowForge.UI.Controllers
             }
             request.MemberId = user.Id;
 
-            bool scheduled = await _taskService.ScheduleTask(request);
+            bool scheduled = await taskService.ScheduleTask(request);
 
             if (!scheduled)
             {
@@ -134,17 +129,17 @@ namespace FlowForge.UI.Controllers
         [Route("UnScheduleTask")]
         public async Task<IActionResult> UnScheduleTask(Guid taskId, Guid projectId)
         {
-            var user = await _userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
             if (user == null)
             {
                 return Unauthorized("User not found");
             }
-            bool unscheduled = await _taskService.UnScheduleTask(taskId, projectId, user.Id);
+            bool unscheduled = await taskService.UnScheduleTask(taskId, projectId, user.Id);
 
             if (!unscheduled)
             {
                 ModelState.AddModelError("", "Failed to unschedule the task. Please try again.");
-                return View("Tasks", await _taskService.GetAllProjectTasks(user.Id, projectId));
+                return View("Tasks", await taskService.GetAllProjectTasks(user.Id, projectId));
             }
 
             TempData["SuccessMessage"] = "Task unscheduled successfully!";
@@ -156,23 +151,23 @@ namespace FlowForge.UI.Controllers
         [Route("delete")]
         public async Task<IActionResult> DeleteTask(Guid projectId, Guid taskId)
         {
-            var task = await _taskService.GetTaskById(projectId, taskId);
+            var task = await taskService.GetTaskById(projectId, taskId);
             if (task == null)
             {
                 return BadRequest();
             }
-            var user = await _userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
             if (user == null)
             {
                 return Unauthorized("User not found");
             }
 
             task.CreatedById = user.Id;
-            bool DeleteSuccess = await _taskService.DeleteTask(task);
+            bool DeleteSuccess = await taskService.DeleteTask(task);
             if (!DeleteSuccess)
             {
                 ModelState.AddModelError("Delete Task", "Task not found or could not be deleted");
-                return View("SubTasks", await _taskService.GetAllProjectTasks(user.Id, projectId));
+                return View("SubTasks", await taskService.GetAllProjectTasks(user.Id, projectId));
             }
 
             return RedirectToAction("Tasks", new
@@ -185,7 +180,7 @@ namespace FlowForge.UI.Controllers
         [Route("EditTask")]
         public async Task<IActionResult> EditTask(Guid projectId, Guid taskId)
         {
-            var user = await _userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
             if (user == null)
             {
                 return NotFound("User not found");
@@ -196,7 +191,7 @@ namespace FlowForge.UI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var project = await _projectService.GetProjectById(user.Id, projectId);
+            var project = await projectService.GetProjectById(user.Id, projectId);
             if (project == null)
             {
                 ModelState.AddModelError("ProjectId", "Project not found");
@@ -206,10 +201,10 @@ namespace FlowForge.UI.Controllers
             if (project.ProjectMembers.FirstOrDefault(u => u.MemberId == user.Id)?.MemberRole == ProjectRole.Member)
             {
                 ModelState.AddModelError("ProjectRole", "You do not have permission to edit this task");
-                return View("Tasks", await _taskService.GetAllProjectTasks(user.Id, projectId));
+                return View("Tasks", await taskService.GetAllProjectTasks(user.Id, projectId));
             }
 
-            var task = await _taskService.GetTaskById(projectId, taskId);
+            var task = await taskService.GetTaskById(projectId, taskId);
             if (task == null)
             {
                 return BadRequest();
@@ -225,13 +220,13 @@ namespace FlowForge.UI.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var user = await _userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
             if (user == null)
             {
                 return BadRequest("User not found");
             }
             taskUpdateRequest.MemberId = user.Id;
-            await _taskService.UpdateTask(taskUpdateRequest);
+            await taskService.UpdateTask(taskUpdateRequest);
             return RedirectToAction("Tasks", new
             {
                 taskUpdateRequest.ProjectId
@@ -242,8 +237,8 @@ namespace FlowForge.UI.Controllers
         [Route("tasks/completed")]
         public async Task<IActionResult> CompletedTasks()
         {
-            ApplicationUser user = await _userManager.FindByEmailAsync(User.Identity.Name);
-            var tasks = await _taskService.GetAllCompletedTask(user.Id);
+            ApplicationUser user = await userManager.FindByEmailAsync(User.Identity.Name);
+            var tasks = await taskService.GetAllCompletedTask(user.Id);
             return View(tasks);
         }
 
@@ -256,9 +251,9 @@ namespace FlowForge.UI.Controllers
                 return BadRequest("Invalid request");
             }
             
-            var task = await _taskService.GetTaskById(taskUpdateStatus.ProjectId, taskUpdateStatus.TaskId);
+            var task = await taskService.GetTaskById(taskUpdateStatus.ProjectId, taskUpdateStatus.TaskId);
 
-            bool updated = await _taskService.UpdateTaskStatus(taskUpdateStatus);
+            bool updated = await taskService.UpdateTaskStatus(taskUpdateStatus);
 
             if (!updated)
             {
@@ -272,16 +267,16 @@ namespace FlowForge.UI.Controllers
         [Route("[action]")]
         public async Task<IActionResult> MoveTask([FromBody] MoveTaskRequest request)
         {
-            var task = await _taskService.GetTaskById(request.ProjectId, request.TaskId);
+            var task = await taskService.GetTaskById(request.ProjectId, request.TaskId);
             if (task == null) return NotFound();
 
-            var user = await _userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
             if (user == null)
             {
                 return Unauthorized("User not found");
             }
 
-            await _taskService.MoveTask(user.Id, request);
+            await taskService.MoveTask(user.Id, request);
             return Ok();
         }
 
@@ -289,7 +284,7 @@ namespace FlowForge.UI.Controllers
         [Route("Assign")]
         public async Task<IActionResult> AssignTask([FromBody] AssignTaskRequest assignRequest)
         {
-            var user = await _userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
             if (user == null)
             {
                 return Unauthorized("User not found");
@@ -300,34 +295,34 @@ namespace FlowForge.UI.Controllers
                 ModelState.AddModelError("assignTask","Can't Assign the task");
                 return View("Tasks");
             }
-            var task = await _taskService.GetTaskById(assignRequest.ProjectId, assignRequest.TaskId);
+            var task = await taskService.GetTaskById(assignRequest.ProjectId, assignRequest.TaskId);
             if (task == null)
             {
                 return NotFound("Task not found");
             }
-            var member = await _projectService.GetProjectMember(assignRequest.ProjectId, assignRequest.MemberId);
-            await _taskService.AssignTask(assignRequest);
+            var member = await projectService.GetProjectMember(assignRequest.ProjectId, assignRequest.MemberId);
+            await taskService.AssignTask(assignRequest);
             return Ok("Task assigned successfully");
         }
 
-            [HttpPost]
-            [Route("[action]")]
-            public async Task<IActionResult> ReorderTasks([FromBody] ReorderRequest reorderRequest)
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<IActionResult> ReorderTasks([FromBody] ReorderRequest reorderRequest)
+        {
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            if (user == null)
             {
-                var user = await _userManager.FindByEmailAsync(User.Identity.Name);
-                if (user == null)
-                {
-                    return Unauthorized("User not found");
-                }
-
-                if (!ModelState.IsValid)
-                {
-                    ModelState.AddModelError("ReorderTasks", "Invalid reorder request");
-                    return View("Tasks", await _taskService.GetAllProjectTasks(user.Id, reorderRequest.ProjectId));
-                }
-
-                await _taskService.ReorderTask(reorderRequest, user.Id);
-                return Ok("Tasks reordered successfully");
+                return Unauthorized("User not found");
             }
+
+            if (!ModelState.IsValid)
+            {
+                ModelState.AddModelError("ReorderTasks", "Invalid reorder request");
+                return View("Tasks", await taskService.GetAllProjectTasks(user.Id, reorderRequest.ProjectId));
+            }
+
+            await reorderTaskService.ReorderTask(reorderRequest, user.Id);
+            return Ok("Tasks reordered successfully");
+        }
     }
 }

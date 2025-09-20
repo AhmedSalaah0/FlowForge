@@ -14,6 +14,7 @@ namespace FlowForge.Core.Domain.RepositoryContract
         Task<Notification?> GetNotificationById(Guid notificationId);
         Task<Notification> EditNotification(Notification notification);
         Task<bool> DeleteNotification(Guid notificationId);
+        Task<bool> DeleteAllNotifications(IEnumerable<Notification> notifications);
         Task<int> GetUnreadNotificationCount(Guid userId);
         Task<bool> MarkNotificationAsRead(Notification notification);
         Task MarkAllNotificationsAsRead(Guid userId);

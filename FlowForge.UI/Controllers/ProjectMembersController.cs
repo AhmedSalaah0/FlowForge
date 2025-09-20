@@ -68,7 +68,7 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpPost]
-        [Route("[action]")]
+        [Route("[action]/{projectId:guid}")]
         public async Task<IActionResult> AcceptInvite(Guid projectId)
         {
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
@@ -84,12 +84,12 @@ namespace FlowForge.UI.Controllers
             catch (Exception ex)
             {
                 ModelState.AddModelError("", $"Error accepting invite: {ex.Message}");
-                return View();
+                return View("~/Views/Projects/Index.cshtml", await _projectService.GetProjects(user.Id));
             }
         }
 
         [HttpPost]
-        [Route("[action]")]
+        [Route("[action]/{projectId:guid}")]
         public async Task<IActionResult> RejectInvite(Guid projectId)
         {
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
@@ -105,7 +105,7 @@ namespace FlowForge.UI.Controllers
             catch (Exception ex)
             {
                 ModelState.AddModelError("", $"Error rejecting invite: {ex.Message}");
-                return View();
+                return View("~/Views/Projects/Index.cshtml", await _projectService.GetProjects(user.Id));
             }
         }
 

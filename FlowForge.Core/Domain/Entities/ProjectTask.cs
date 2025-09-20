@@ -21,6 +21,6 @@ namespace FlowForge.Core.Domain.Entities
         public DateTime? CreatedAt { get; set; } = DateTime.Now;
         public Guid? AssigneeId { get; set; }
         public ProjectMember? Assignee { get; set; }
-        public int? Order { get; set; }
+        public decimal? Order { get; set; }
     }
 }

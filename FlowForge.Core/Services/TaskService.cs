@@ -23,7 +23,8 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         {
             throw new ArgumentException("invalid projectId");
         }
-        if (project.ProjectMembers.FirstOrDefault(u => u.MemberId == userId)?.MemberRole == ProjectRole.Member)
+        if (project.ProjectMembers.FirstOrDefault(u => u.MemberId == userId)?.MemberRole == ProjectRole.Member &&
+            project.ProjectMembers.FirstOrDefault(u => u.MemberId == userId).MembershipStatus == MembershipStatus.ACCEPTED)
         {
             throw new UnauthorizedAccessException("You are not authorized to add tasks to this project.");
         }
@@ -39,9 +40,11 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
             return null;
         }
         var projectUsers = await _projectService.GetProjectMembers(projectId);
-        if (!projectUsers.Any(u => u.MemberId == userId))
+        if (!projectUsers.Any(u =>
+        u.MemberId == userId &&
+        (u.MembershipStatus == MembershipStatus.ACCEPTED || u.MemberRole == ProjectRole.Creator)))
         {
-            throw new UnauthorizedAccessException("You are not a member of this Project.");
+            throw new UnauthorizedAccessException("You are not a valid member of this Project.");
         }
         var Tasks = await _taskRepository.GetTasks(userId, projectId);
         if (Tasks == null)
@@ -51,13 +54,13 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         return [.. Tasks.Select(s => s.ToSectionWithTasksResponse())];
     }
 
-    public async Task<TaskResponse?> GetTaskById(Guid? projectId, Guid? taskId)
+    public async Task<TaskResponse?> GetTaskById(Guid? projectId, Guid? taskId, bool track = true)
     {
         if (projectId is null || taskId is null)
         {
             return null;
         }
-        var task = await _taskRepository.GetTaskById(projectId, taskId);
+        var task = await _taskRepository.GetTaskById(projectId, taskId, track);
         if (task == null)
             return null;
 
@@ -160,9 +163,9 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
             return false;
         }
 
-        var task = _taskRepository.GetTaskById(projectId, taskId).Result;
-        var GroupUsers = _projectService.GetProjectMembers(projectId).Result;
-        if (task == null || !GroupUsers.Any(u => u.MemberId == userId))
+        var task = await _taskRepository.GetTaskById(projectId, taskId);
+        var GroupUsers = await _projectService.GetProjectMembers(projectId);
+        if (task == null || !GroupUsers.Any(u => u.MemberId == userId && u.MembershipStatus == MembershipStatus.ACCEPTED))
         {
             return false;
         }
@@ -253,24 +256,56 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
             throw new ArgumentException("Invalid project or section ID");
         }
 
-        var tasks = (await _taskRepository.GetTasks(userId, reorderRequest.ProjectId))
-                    .SelectMany(section => section.Tasks)
-                    .Where(t => t.SectionId == reorderRequest.SectionId);
+        //var tasks = (await _taskRepository.GetTasks(userId, reorderRequest.ProjectId))
+        //            .SelectMany(section => section.Tasks)
+        //            .Where(t => t.SectionId == reorderRequest.SectionId);
 
-        for (int i = 0; i < reorderRequest.TaskIds.Count; i++)
+        //for (int i = 0; i < reorderRequest.TaskIds.Count; i++)
+        //{
+        //    var TaskId = reorderRequest.TaskIds[i];
+        //    var task = tasks.FirstOrDefault(t => t.TaskId == TaskId);
+        //    if (task is not null)
+        //    {
+        //        task.Order = i;
+        //        _taskRepository.UpdateTaskOrder(task);
+        //    }
+        //    else
+        //    {
+        //        throw new ArgumentException($"Task with ID {TaskId} not found in the specified section.");
+        //    }
+        //}
+
+        var task = await _taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.TaskId) ?? throw new ArgumentException("Task not found");
+        var nextTask = await _taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.NextTaskId);
+        var prevTask = await _taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.PrevTaskId);
+
+        decimal newOrder;
+
+        if (prevTask != null && nextTask != null)
         {
-            var TaskId = reorderRequest.TaskIds[i];
-            var task = tasks.FirstOrDefault(t => t.TaskId == TaskId);
-            if (task is not null)
-            {
-                task.Order = i;
-                _taskRepository.UpdateTaskOrder(task);
-            }
-            else
-            {
-                throw new ArgumentException($"Task with ID {TaskId} not found in the specified section.");
-            }
+            var left = prevTask.Order.GetValueOrDefault();
+            var right = nextTask.Order.GetValueOrDefault();
+            newOrder = (left + right) / 2m;
         }
+        else if (prevTask != null)
+        {
+            var left = prevTask.Order.GetValueOrDefault();
+            newOrder = left + 10;
+        }
+        else if (nextTask != null)
+        {
+            var right = nextTask.Order.GetValueOrDefault();
+            newOrder = right - 10;
+        }
+        else
+        {
+            newOrder = 10;
+        }
+
+        task.Order = newOrder;
+        task.SectionId = reorderRequest.SectionId;
+        _taskRepository.UpdateTaskOrder(task);
+
         await _taskRepository.SaveChangesAsync();
         return true;
     }

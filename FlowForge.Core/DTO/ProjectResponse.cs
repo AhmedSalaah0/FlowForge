@@ -12,7 +12,7 @@ namespace FlowForge.Core.DTO
         public Guid CreatedById { get; set; }
         public ApplicationUser CreatedBy { get; set; }
         public string SelectedColor { get; set; }
-        public DateTime? CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; }
         public ICollection<ProjectMember>? ProjectMembers { get; set; } = [];
         public ProjectRole? UserRole { get; set; }
     }

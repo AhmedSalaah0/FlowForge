@@ -23,7 +23,7 @@
             <ul class="task-list completed-list">
                 @foreach (TaskResponse task in Model)
                 {
-                    <li class="task-item completed">
+                    <li class="task-item completed fade-in">
                         <div class="task-checkbox">
                             <span class="checkmark checked"><i class="fas fa-check"></i></span>
                         </div>
@@ -44,15 +44,3 @@
         }
     </div>
 </div>
-
-<script>
-    // Add animation to completed tasks
-    document.addEventListener('DOMContentLoaded', function() {
-        const completedItems = document.querySelectorAll('.completed-list .task-item');
-        completedItems.forEach((item, index) => {
-            setTimeout(() => {
-                item.classList.add('fade-in');
-            }, index * 100);
-        });
-    });
-</script>

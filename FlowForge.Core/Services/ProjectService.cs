@@ -7,47 +7,52 @@ using FlowForge.Core.Domain.IdentityEntities;
 
 namespace FlowForge.Core.Services
 {
-    public class ProjectService(IProjectRepository context) : IProjectService
+    public class ProjectService(IProjectRepository context, IProjectMemberRepository projectMemberRepository) : IProjectService
     {
-        private readonly IProjectRepository _context = context;
 
-        public async Task<ProjectResponse> CreateProject(ProjectAddRequest groupAddRequest, Guid userId)
+        public async Task<ProjectResponse> CreateProject(ProjectAddRequest? groupAddRequest)
         {
             ArgumentNullException.ThrowIfNull(groupAddRequest);
-            groupAddRequest.CreatedAt = DateTime.Now;
-            Project groupTasks = groupAddRequest.ToProject();
-            groupTasks.CreatedById = userId;
-            var UserGroup = new ProjectMember
+            if (groupAddRequest.CreatedById == Guid.Empty)
             {
-                ProjectId = groupTasks.ProjectId,
-                MemberId = userId,
-                Project = groupTasks,
+                throw new ArgumentException(nameof(groupAddRequest.CreatedById));
+            }
+
+            groupAddRequest.CreatedAt = DateTime.Now;
+            Project project = groupAddRequest.ToProject();
+            project.ProjectId = Guid.NewGuid();
+            var projectMember = new ProjectMember
+            {
+                ProjectId = project.ProjectId,
+                MemberId = groupAddRequest.CreatedById,
+                Project = project,
                 MemberRole = ProjectRole.Creator,
                 MembershipStatus = MembershipStatus.ACCEPTED
             };
-            groupTasks.ProjectMembers.Add(UserGroup);
-            var group = await _context.CreateProject(groupTasks);
-            return group.ToProjectResponse(userId);
+            project.ProjectMembers.Add(projectMember);
+            var group = await context.CreateProject(project);
+            return project.ToProjectResponse(groupAddRequest.CreatedById);
         }
 
         public async Task<List<ProjectResponse>> GetProjects(Guid userId)
         {
-            List<Project>? projects = await _context.GetProjects(userId);
+            if (userId == Guid.Empty)
+            {
+                throw new ArgumentException("UserId is Empty", nameof(userId));
+            }
+
+            List<Project>? projects = await context.GetProjects(userId);
             return [.. projects.Select(p => p.ToProjectResponse(userId))];
         }
 
         public async Task<ProjectResponse> GetProjectById(Guid userId, Guid? projectId)
         {
-            if (projectId == null)
+            if (projectId == Guid.Empty || userId == Guid.Empty)
             {
-                throw new ArgumentNullException(nameof(projectId));
+                throw new ArgumentException("projectId or userId is Empty");
             }
-            var projectMembers = await _context.GetProjectMembers(projectId);
-            var project = await _context.GetProjectById(userId, projectId);
-            if (project == null)
-            {
-                throw new ArgumentException(nameof(project));
-            }
+            var projectMembers = await context.GetProjectMembers(projectId);
+            var project = await context.GetProjectById(userId, projectId) ?? throw new KeyNotFoundException("projectId or userId is invalid");
             if (!projectMembers.Any(u => u.MemberId == userId) && project.CreatedById != userId)
             {
                 throw new UnauthorizedAccessException("You are not a member of this project.");
@@ -57,13 +62,13 @@ namespace FlowForge.Core.Services
         }
         public async Task<ProjectResponse> UpdateProject(Guid? projectId, ProjectUpdateRequest projectUpdateRequest)
         {
-            var project = await _context.GetProjectById(projectUpdateRequest.UserId, projectId);
+            var project = await context.GetProjectById(projectUpdateRequest.UserId, projectId);
             if (project == null)
             {
                 throw new ArgumentException(nameof(project));
             }
 
-            await _context.UpdateProject(project.ProjectId, projectUpdateRequest.ToProject());
+            await context.UpdateProject(project.ProjectId, projectUpdateRequest.ToProject());
             return project.ToProjectResponse(projectUpdateRequest.UserId);
         }
         public async Task<bool> DeleteProject(Guid userId, Guid projectId)
@@ -71,9 +76,18 @@ namespace FlowForge.Core.Services
             if (projectId == Guid.Empty) return false;
 
 
-            var group = await _context.GetProjectById(userId, projectId);
+            var group = await context.GetProjectById(userId, projectId);
             if (group == null) return false;
-            bool result = await _context.DeleteProject(userId, projectId);
+            if (group.CreatedById != userId)
+            {
+                if (!group.ProjectMembers.Any(u => u.MemberId == userId))
+                {
+                    throw new UnauthorizedAccessException("You are not authorized to delete this project.");
+                }
+                var response = await projectMemberRepository.RemoveProjectMember(group.ProjectMembers.FirstOrDefault(u => u.MemberId == userId && u.ProjectId == projectId) ?? throw new ArgumentException("Member not found in the project."));
+                return response;
+            }
+            bool result = await context.DeleteProject(userId, projectId);
             return result;
         }
         public Task<IEnumerable<ProjectMember>> GetProjectMembers(Guid? projectId)
@@ -82,7 +96,7 @@ namespace FlowForge.Core.Services
             {
                 throw new ArgumentNullException(nameof(projectId));
             }
-            return _context.GetProjectMembers(projectId);
+            return context.GetProjectMembers(projectId);
         }
 
         public async Task<ProjectMember> GetProjectMember(Guid? projectId, Guid memberId)
@@ -91,7 +105,7 @@ namespace FlowForge.Core.Services
             {
                 throw new ArgumentNullException();
             }
-            var projectMember = await _context.GetProjectMemberById(projectId, memberId);
+            var projectMember = await context.GetProjectMemberById(projectId, memberId);
             if (projectMember == null)
             {
                 throw new ArgumentException(nameof(projectId));

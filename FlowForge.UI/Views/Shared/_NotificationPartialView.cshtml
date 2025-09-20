@@ -8,75 +8,21 @@
 <div class="notification-content">
     @if (!Model.Any())
     {
-        <div class="text-center text-muted py-3">
+        <div class="text-center text-secondary py-3">
             <i class="fas fa-info-circle me-1"></i>
             <span class="d-none d-sm-inline">No notifications</span>
-            <span class="d-sm-none">No notifications</span>
         </div>
     }
     else
     {
         @foreach (var notification in Model.Take(5))
         {
-            <div class="dropdown-item text-white border-bottom border-secondary notification-item @(!notification.IsRead ? "unread" : "")">
-                <div class="mb-1 fw-semibold text-info notification-message">
-                    @notification.Message
-                </div>
-
-                <small class="text-light d-block mb-2 notification-time">
-                    <span class="d-none d-md-inline">
-                        @notification.CreatedAt.ToLocalTime().ToString("g")
-                    </span>
-                    <span class="d-md-none">
-                        @notification.CreatedAt.ToLocalTime().ToString("M/d h:mm tt")
-                    </span>
-                </small>
-
-                @if (notification.NotificationType == NotificationType.JOIN_REQUEST)
-                {
-                    <div class="notification-actions">
-                        <form asp-controller="ProjectMembers" asp-action="AcceptInvite" method="post" class="d-inline">
-                            <input type="hidden" name="projectId" value="@notification.ProjectId" />
-                            <button type="submit" class="btn btn-sm btn-outline-success action-btn">
-                                <i class="fas fa-check d-sm-none"></i>
-                                <span class="d-none d-sm-inline">Accept</span>
-                            </button>
-                            @Html.AntiForgeryToken()
-                        </form>
-                        <form asp-controller="ProjectMembers" asp-action="RejectInvite" method="post" class="d-inline">
-                            <input type="hidden" name="projectId" value="@notification.ProjectId" />
-                            <button type="submit" class="btn btn-sm btn-outline-danger action-btn">
-                                <i class="fas fa-times d-sm-none"></i>
-                                <span class="d-none d-sm-inline">Reject</span>
-                            </button>
-                            @Html.AntiForgeryToken()
-                        </form>
-                    </div>
-                }
-
-                @{
-                    var member = ((IEnumerable<ProjectMember>)notification.Project.ProjectMembers)
-                    .FirstOrDefault(u => u.MemberId == notification.ReceiverId
-                    && u.ProjectId == notification.ProjectId);
-                }
-
-                @if (notification.NotificationType == NotificationType.INFO && member?.MembershipStatus == MembershipStatus.REJECTED)
-                {
-                    <form asp-controller="ProjectMembers" asp-action="AcceptInvite" method="post" class="d-inline">
-                        <input type="hidden" name="projectId" value="@notification.ProjectId" />
-                        <button type="submit" class="btn btn-sm btn-outline-danger action-btn w-100">
-                            <i class="fas fa-undo d-sm-none"></i>
-                            <span class="d-none d-sm-inline">Undo Rejection</span>
-                            <span class="d-sm-none">Undo</span>
-                        </button>
-                    </form>
-                }
-            </div>
+            @await Html.PartialAsync("_NotificationItem", notification)
         }
     }
 
     <div class="dropdown-item text-center mt-2 p-2">
-        <a href="/Notifications/All" class="btn btn-sm btn-outline-light view-all-btn">
+        <a asp-controller="Notification" asp-action="AllNotifications" class="btn btn-sm btn-outline-light view-all-btn">
             <i class="fas fa-list d-sm-none"></i>
             <span class="d-none d-sm-inline">View All Notifications</span>
             <span class="d-sm-none">View All</span>

@@ -2,7 +2,7 @@
 @model IEnumerable<ProjectResponse>
 @{
     ViewBag.Title = "Home";
-    var grouped = Model.GroupBy(g => g.CreatedAt.Value.Date);
+    var grouped = Model.GroupBy(g => g.CreatedAt.Date);
 }
 
 @if (!ViewData.ModelState.IsValid)
@@ -102,14 +102,3 @@
         }
     }
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const cards = document.querySelectorAll('.card.fade-in');
-        cards.forEach((card, index) => {
-            setTimeout(() => {
-                card.classList.add('show');
-            }, 50 * index);
-        });
-    });
-</script>

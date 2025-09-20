@@ -3,6 +3,7 @@ using FlowForge.Core.Domain.RepositoryContract;
 using FlowForge.Core.Enums;
 using FlowForge.Infrastructure.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace FlowForge.Infrastructure.Repositories;
 public class TaskRepository(ApplicationDbContext context) : ITaskRepository
@@ -19,17 +20,19 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
     {
         return await _context.Tasks.Where(temp => temp.Status == ProjectTaskStatus.Completed).ToListAsync();
     }
-    public Task<ProjectTask?> GetTaskById(Guid? groupId, Guid? taskId)
+    public async Task<ProjectTask?> GetTaskById(Guid? groupId, Guid? taskId, bool track)
     {
-        return _context.Tasks
+        var task = _context.Tasks
             .Include(temp => temp.Assignee)
-            .FirstOrDefaultAsync(temp => temp.TaskId == taskId && temp.ProjectId == groupId);
+            .Where(task => task.ProjectId == groupId && task.TaskId == taskId);
+            
+        return track ? await task.FirstOrDefaultAsync() : await task.AsNoTracking().FirstOrDefaultAsync();
     }
 
-    public async Task<List<ProjectSection>> GetTasks(Guid userId, Guid groupId)
+    public async Task<List<ProjectSection>> GetTasks(Guid userId, Guid ProjectId)
     {
         return await _context.Sections
-            .Where(section => section.ProjectId == groupId)
+            .Where(section => section.ProjectId == ProjectId)
             .Include(section => section.Tasks)
                 .ThenInclude(task => task.Assignee)
             .ToListAsync();
@@ -89,5 +92,10 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
     public Task SaveChangesAsync()
     {
         return _context.SaveChangesAsync();
+    }
+
+    public Task<IDbContextTransaction> BeginTransactionAsync()
+    {
+        return _context.Database.BeginTransactionAsync();
     }
 }

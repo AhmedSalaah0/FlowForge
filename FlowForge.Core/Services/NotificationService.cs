@@ -1,15 +1,12 @@
-﻿using FlowForge.Core.Domain.Entities;
+using FlowForge.Core.Domain.Entities;
 using FlowForge.Core.Domain.RepositoryContract;
+using FlowForge.Core.Hubs;
 using FlowForge.Core.ServiceContracts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
 
 namespace FlowForge.Core.Services
 {
-    public class NotificationService(INotificationRepository notificationRepository) : INotificationService
+    public class NotificationService(INotificationRepository notificationRepository, IHubContext<NotificationHub> hubContext) : INotificationService
     {
         private readonly INotificationRepository _notificationRepository = notificationRepository;
         public async Task<bool> SendNotification(Notification notification)
@@ -22,7 +19,31 @@ namespace FlowForge.Core.Services
             {
                 notification.NotificationId = Guid.NewGuid();
             }
+            
+            // First save to database
             var result = await _notificationRepository.SendNotification(notification);
+            
+            try
+            {
+                // Then send via SignalR
+                await hubContext.Clients.User(notification.ReceiverId.ToString())
+                    .SendAsync("ReceiveNotification", new {
+                        notification.NotificationId,
+                        notification.Message,
+                        notification.SenderId,
+                        notification.ReceiverId,
+                        notification.ProjectId,
+                        notification.NotificationType,
+                        notification.IsRead,
+                        CreatedAt = notification.CreatedAt.ToString("o")
+                    });
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't fail the operation since the notification is already saved
+                Console.Error.WriteLine($"Error sending notification via SignalR: {ex.Message}");
+            }
+            
             return result;
         }
 
@@ -87,6 +108,17 @@ namespace FlowForge.Core.Services
 
             var notify = await _notificationRepository.EditNotification(notification);
             return notify;
+        }
+
+        public async Task<bool> DeleteAllNotifications(Guid userId)
+        {
+            if (userId == Guid.Empty)
+            {
+                throw new ArgumentException("User ID cannot be empty.", nameof(userId));
+            }
+            var notifications = await _notificationRepository.GetNotifications(userId);
+            
+            return await _notificationRepository.DeleteAllNotifications(notifications);
         }
     }
 }

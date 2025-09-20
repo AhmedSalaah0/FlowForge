@@ -9,8 +9,7 @@ namespace FlowForge.Core.Domain.Entities
         public ApplicationUser CreatedBy { get; set; }
         public string? ProjectTitle { get; set; }
         public string SelectedColor { get; set; }
-        public DateTime? CreatedAt { get; set; }
-
+        public DateTime CreatedAt { get; set; }
         public ICollection<ProjectMember> ProjectMembers { get; set; } = [];
         public ICollection<ProjectSection> Sections { get; set; } = [];
 

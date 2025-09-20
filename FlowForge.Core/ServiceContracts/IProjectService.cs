@@ -5,7 +5,7 @@ namespace FlowForge.Core.ServiceContracts
 {
     public interface IProjectService
     {
-        Task<ProjectResponse> CreateProject(ProjectAddRequest projectAddRequest, Guid userId);
+        Task<ProjectResponse> CreateProject(ProjectAddRequest? projectAddRequest);
         Task<List<ProjectResponse>> GetProjects(Guid userId);
         Task<ProjectResponse> GetProjectById(Guid userId, Guid? projectId);
         Task<ProjectResponse> UpdateProject(Guid? projectId, ProjectUpdateRequest projectUpdateRequest);
