@@ -13,11 +13,11 @@ namespace FlowForge.UI.Controllers
 {
     [Controller]
     [Route("[controller]/[action]")]
-    [AllowAnonymous]
     public class AccountController(UserManager<ApplicationUser> _userManager, SignInManager<ApplicationUser> _signInManager, IEmailSender sender) : Controller
     {
 
         [HttpGet]
+        [Authorize("NotAuthenticated")]
         public IActionResult Login()
         {
             if (_signInManager.IsSignedIn(User))
@@ -28,6 +28,7 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpPost]
+        [Authorize("NotAuthenticated")]
         public async Task<IActionResult> Login(LoginDTO loginDTO, string? ReturnUrl)
         {
             if (!ModelState.IsValid)
@@ -40,13 +41,12 @@ namespace FlowForge.UI.Controllers
                 ModelState.AddModelError(nameof(LoginDTO.Email), "Invalid Email or Password");
                 return View(loginDTO);
             }
-
             var result = await _signInManager.PasswordSignInAsync(user, loginDTO.Password, loginDTO.RememberMe, false);
             if (result.Succeeded)
             {
                 if (!ReturnUrl.IsNullOrEmpty() && Url.IsLocalUrl(ReturnUrl))
                 {
-                    return LocalRedirect(ReturnUrl); 
+                    return LocalRedirect(ReturnUrl);
                 }
                 return RedirectToAction("Index", "Projects");
             }
@@ -58,6 +58,7 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpGet]
+        [Authorize("NotAuthenticated")]
         public IActionResult Register()
         {
             if (_signInManager.IsSignedIn(User))
@@ -68,6 +69,7 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpPost]
+        [Authorize("NotAuthenticated")]
         public async Task<IActionResult> Register(RegisterDTO registerDTO)
         {
             if (!ModelState.IsValid)
@@ -107,7 +109,6 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpPost]
-        [Authorize]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
@@ -122,6 +123,7 @@ namespace FlowForge.UI.Controllers
 
         [HttpPost]
         [Route("[action]")]
+        [Authorize("NotAuthenticated")]
         public async Task<IActionResult> ForgotPassword(string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
@@ -147,6 +149,7 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpGet]
+        [HttpGet]
         public async Task<IActionResult> ResetPassword(string token, string email)
         {
             if (token == null || email == null)
@@ -159,6 +162,7 @@ namespace FlowForge.UI.Controllers
 
 
         [HttpPost]
+        [Authorize("NotAuthenticated")]
         public async Task<IActionResult> ResetPassword(ResetPasswordDTO resetPasswordDTO)
         {
             if (!ModelState.IsValid)
@@ -186,6 +190,18 @@ namespace FlowForge.UI.Controllers
                 }
                 return View(resetPasswordDTO);
             }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Me()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+            
+            return PartialView("_ProfilePartialView", user);
         }
     }
 }
