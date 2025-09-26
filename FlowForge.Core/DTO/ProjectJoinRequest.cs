@@ -11,9 +11,9 @@ namespace FlowForge.Core.DTO
     public class ProjectJoinRequest
     {
         public Guid ProjectId { get; set; }
-        public Guid? AddingUserId { get; set; }
+        public Guid AddingUserId { get; set; }
         public ApplicationUser? AddingUser { get; set; }
-        public Guid? AddedUserId { get; set; }
+        public Guid AddedUserId { get; set; }
         public ApplicationUser? AddedUser { get; set; }
         public string UserEmail { get; set; } = string.Empty;
         public ProjectRole MemberRole { get; set; } = ProjectRole.Member;

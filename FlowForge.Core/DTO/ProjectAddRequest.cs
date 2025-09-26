@@ -1,4 +1,5 @@
 ﻿using FlowForge.Core.Domain.Entities;
+using FlowForge.Core.Enums;
 
 namespace FlowForge.Core.DTO
 {
@@ -8,6 +9,7 @@ namespace FlowForge.Core.DTO
         public string SelectedColor { get; set; } = "#8b1c32";
         public Guid CreatedById { get; set; }
         public DateTime CreatedAt { get; set; }
+        public ProjectVisibility ProjectVisibility { get; set; } = ProjectVisibility.Private;
     
         public Project ToProject()
         {
@@ -16,7 +18,8 @@ namespace FlowForge.Core.DTO
                 ProjectTitle = ProjectTitle,
                 SelectedColor = SelectedColor,
                 CreatedAt = CreatedAt,
-                CreatedById = CreatedById
+                CreatedById = CreatedById,
+                ProjectVisibility = ProjectVisibility
             };
         }
     }

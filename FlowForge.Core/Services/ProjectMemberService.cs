@@ -20,14 +20,14 @@ namespace FlowForge.Core.Services
             {
                 throw new ArgumentException("Invalid Project.");
             }
-            var alreadyExists = (await projectRepository.GetProjectMembers(projectJoinRequest.ProjectId))
-                .Any(t => t.MemberId == projectJoinRequest.AddedUserId);
+            var projectMembers = (await projectRepository.GetProjectMembers(projectJoinRequest.ProjectId));
 
+            bool memberExist = projectMembers.Any(pm => pm.MemberId == projectJoinRequest.AddedUserId);
 
-            if (!alreadyExists)
+            if (!memberExist)
             {
-                var existingProject = await projectRepository.GetProjectById(projectJoinRequest.AddingUserId, projectJoinRequest.ProjectId) ?? throw new ArgumentException("Project not found.");
 
+                var existingProject = projectMembers.FirstOrDefault(p => p.ProjectId == projectJoinRequest.ProjectId).Project;
                 var projectMember = new ProjectMember
                 {
                     MemberId = projectJoinRequest.AddedUserId,
@@ -63,17 +63,14 @@ namespace FlowForge.Core.Services
             }
             var projectMembers = await projectRepository.GetProjectMembers(projectId);
 
-            var memberToRemove = projectMembers.FirstOrDefault(pm => pm.MemberId == memberId && pm.ProjectId == projectId);
-            if (memberToRemove == null)
-            {
-                throw new ArgumentException("Member not found in the project.");
-            }
-            if (projectMembers.Any(pm => pm.MemberId == userId && pm.ProjectId == projectId && pm.MemberRole == ProjectRole.Member))
+            var memberToRemove = projectMembers.FirstOrDefault(pm => pm.MemberId == memberId && pm.ProjectId == projectId) ?? throw new ArgumentException("Member not found in the project.");
+            
+            if (projectMembers.Any(pm => pm.MemberId == userId && pm.ProjectId == projectId && pm.MemberRole == ProjectRole.Member) && userId != memberId)
             {
                 throw new UnauthorizedAccessException("Only admin and moderator can remove members from the project.");
             }
 
-            if (memberToRemove.MemberRole == ProjectRole.Creator)
+            if (memberToRemove.MemberRole == ProjectRole.Creator && userId != memberToRemove.MemberId)
             {
                 throw new UnauthorizedAccessException("Cannot remove the project creator.");
             }
@@ -81,7 +78,7 @@ namespace FlowForge.Core.Services
             await projectMemberRepository.RemoveProjectMember(memberToRemove);
             try
             {
-                var notification = (await notificationService.GetNotifications(memberId))?.FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == memberId).NotificationId;
+                var notification = (await notificationService.GetNotifications(memberId))?.FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == memberId)?.NotificationId;
                 await notificationService.DeleteNotification(notification ?? Guid.Empty);
             }
             catch (Exception ex)

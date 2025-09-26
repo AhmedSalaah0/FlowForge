@@ -1,4 +1,5 @@
 ﻿using FlowForge.Core.Domain.Entities;
+using FlowForge.Core.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,7 @@ namespace FlowForge.Core.DTO
         public Guid SectionId { get; set; }
         public string? SectionName { get; set; }
         public Guid ProjectId { get; set; }
+        public ProjectResponse Project { get; set; }
         public Guid CreatedById { get; set; }
         public ICollection<ProjectTask> Tasks { get; set; } = [];
     }

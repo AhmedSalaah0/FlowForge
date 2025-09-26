@@ -7,9 +7,6 @@ namespace FlowForge.Core.Services;
 
 public class TaskService(ITaskRepository taskRepository, IProjectService projectService, INotificationService notificationService) : ITaskService
 {
-    private readonly ITaskRepository _taskRepository = taskRepository;
-    private readonly IProjectService _projectService = projectService;
-    private readonly INotificationService _notificationService = notificationService;
 
     public async Task<TaskResponse> AddTask(Guid userId, TaskAddRequest? task)
     {
@@ -18,7 +15,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         var ProjectTask = task.ToTask();
         ProjectTask.CreatedById = userId;
         ProjectTask.TaskId = Guid.NewGuid();
-        var project = await _projectService.GetProjectById(userId, task.ProjectId);
+        var project = await projectService.GetProjectById(userId, task.ProjectId);
         if (project == null)
         {
             throw new ArgumentException("invalid projectId");
@@ -28,7 +25,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         {
             throw new UnauthorizedAccessException("You are not authorized to add tasks to this project.");
         }
-        await _taskRepository.CreateTask(ProjectTask);
+        await taskRepository.CreateTask(ProjectTask);
         var taskResponse = ProjectTask.ToTaskResponse();
         return taskResponse;
     }
@@ -39,14 +36,22 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         {
             return null;
         }
-        var projectUsers = await _projectService.GetProjectMembers(projectId);
-        if (!projectUsers.Any(u =>
+        var project = await projectService.GetProjectById(userId, projectId);
+        var projectUsers = project.ProjectMembers ?? throw new Exception("Error occures");
+
+        var isMember = projectUsers.Any(u =>
         u.MemberId == userId &&
-        (u.MembershipStatus == MembershipStatus.ACCEPTED || u.MemberRole == ProjectRole.Creator)))
+        (u.MembershipStatus == MembershipStatus.ACCEPTED || u.MemberRole == ProjectRole.Creator));
+        if (!isMember)
         {
-            throw new UnauthorizedAccessException("You are not a valid member of this Project.");
+            var projectVisibility = (await projectService.GetProjectById(userId, projectId)).ProjectVisibility;
+            if (projectVisibility == ProjectVisibility.Public)
+            {
+                throw new UnauthorizedAccessException("Join_Allowed");
+            }
+            throw new UnauthorizedAccessException("You Can't join private projects without invitation");
         }
-        var Tasks = await _taskRepository.GetTasks(userId, projectId);
+        var Tasks = await taskRepository.GetTasks(userId, projectId);
         if (Tasks == null)
         {
             return null;
@@ -60,7 +65,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         {
             return null;
         }
-        var task = await _taskRepository.GetTaskById(projectId, taskId, track);
+        var task = await taskRepository.GetTaskById(projectId, taskId, track);
         if (task == null)
             return null;
 
@@ -73,20 +78,20 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         {
             return null;
         }
-        var toDoItem = await _taskRepository.GetTaskById(task.ProjectId, task.TaskId);
+        var toDoItem = await taskRepository.GetTaskById(task.ProjectId, task.TaskId);
         if (toDoItem is null)
         {
             return null;
         }
         var updatedTask = task.ToTask();
 
-        await _taskRepository.UpdateTask(updatedTask);
+        await taskRepository.UpdateTask(updatedTask);
         return updatedTask.ToTaskResponse();
     }
 
     public async Task<IEnumerable<TaskResponse>?> GetAllCompletedTask(Guid userId)
     {
-        var allProjectss = await _projectService.GetProjects(userId);
+        var allProjectss = await projectService.GetProjects(userId);
         List<List<TaskResponse>>? tasks = [];
         foreach (var project in allProjectss)
         {
@@ -99,26 +104,26 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         return tasks.SelectMany(x => x).ToList();
     }
 
-    public async Task<bool> DeleteTask(TaskResponse task)
+    public async Task<bool> DeleteTask(Guid userId, Guid projectId, Guid taskId)
     {
+        var task = await GetTaskById(projectId, taskId);
         if (task is null)
         {
             return false;
         }
 
-        var projectTask = await _taskRepository.GetTaskById(task.ProjectId, task.TaskId);
-        if (projectTask is null)
-        {
-            return false;
-        }
-
-        var project = await _projectService.GetProjectById(task.CreatedById, projectTask.ProjectId);
+        var project = await projectService.GetProjectById(userId, task.ProjectId);
         if (project is null)
         {
             return false;
         }
 
-        await _taskRepository.DeleteTask(task.ToTask());
+        if (project.ProjectMembers.FirstOrDefault(p => p.MemberId == userId).MemberRole == ProjectRole.Member && task.CreatedById != userId)
+        {
+            throw new UnauthorizedAccessException("you Can't delete this task");
+        }
+
+        await taskRepository.DeleteTask(task.ToTask());
         return true;
     }
 
@@ -129,7 +134,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
             return false;
         }
 
-        var State = await _taskRepository.UpdateTaskStatus(taskUpdateStatus.TaskId, statusEnum);
+        var State = await taskRepository.UpdateTaskStatus(taskUpdateStatus.TaskId, statusEnum);
         return State;
     }
 
@@ -139,7 +144,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         {
             return false;
         }
-        var task = await _taskRepository.GetTaskById(request.ProjectId, request.TaskId);
+        var task = await taskRepository.GetTaskById(request.ProjectId, request.TaskId);
         if (task is null)
         {
             return false;
@@ -151,7 +156,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         task.IsRecurring = request.IsRecurring;
         task.RecurringInterval = request.IsRecurring ? request.RecurringInterval : 0;
 
-        await _taskRepository.UpdateTask(task);
+        await taskRepository.UpdateTask(task);
 
         return true;
     }
@@ -163,8 +168,8 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
             return false;
         }
 
-        var task = await _taskRepository.GetTaskById(projectId, taskId);
-        var GroupUsers = await _projectService.GetProjectMembers(projectId);
+        var task = await taskRepository.GetTaskById(projectId, taskId);
+        var GroupUsers = await projectService.GetProjectMembers(projectId);
         if (task == null || !GroupUsers.Any(u => u.MemberId == userId && u.MembershipStatus == MembershipStatus.ACCEPTED))
         {
             return false;
@@ -176,7 +181,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         task.ScheduleDateTime = null;
         task.IsRecurring = false;
         task.RecurringInterval = 0;
-        await _taskRepository.UpdateTask(task);
+        await taskRepository.UpdateTask(task);
         return true;
     }
 
@@ -186,12 +191,12 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         {
             throw new ArgumentException("Invalid request");
         }
-        var task = await _taskRepository.GetTaskById(request.ProjectId, request.TaskId);
+        var task = await taskRepository.GetTaskById(request.ProjectId, request.TaskId);
         if (task is null)
         {
             throw new ArgumentException("Task not found");
         }
-        var project = await _projectService.GetProjectById(userId, request.ProjectId);
+        var project = await projectService.GetProjectById(userId, request.ProjectId);
         if (project is null)
         {
             throw new ArgumentException("Project not found");
@@ -200,7 +205,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         {
             throw new UnauthorizedAccessException("You are not authorized to move tasks in this project.");
         }
-        bool result = await _taskRepository.MoveTask(task, request.NewSectionId);
+        bool result = await taskRepository.MoveTask(task, request.NewSectionId);
         if (!result)
         {
             throw new InvalidOperationException("Failed to move task. Please check the section ID and try again.");
@@ -210,7 +215,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
     public async Task<TaskResponse> AssignTask(AssignTaskRequest assignTask)
     {
         ArgumentNullException.ThrowIfNull(assignTask);
-        var project = await _projectService.GetProjectById(assignTask.MemberId, assignTask.ProjectId);
+        var project = await projectService.GetProjectById(assignTask.UserId, assignTask.ProjectId);
         if (project == null)
         {
             throw new ArgumentException("Invalid projectId");
@@ -221,7 +226,7 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
             throw new UnauthorizedAccessException("You are not authorized to assign tasks in this project.");
         }
 
-        var task = _taskRepository.GetTaskById(assignTask.ProjectId, assignTask.TaskId).Result;
+        var task = taskRepository.GetTaskById(assignTask.ProjectId, assignTask.TaskId).Result;
         if (task == null)
         {
             throw new ArgumentException("Invalid taskId");
@@ -234,11 +239,11 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
 
         
 
-        var UpdatedTask = await _taskRepository.AssignTask(task, assignTask.MemberId);
+        var UpdatedTask = await taskRepository.AssignTask(task, assignTask.MemberId);
         if (UpdatedTask == null) {
             throw new InvalidOperationException("can't assign this task");
         }
-        _notificationService.SendNotification(new Notification()
+        notificationService.SendNotification(new Notification()
         {
             NotificationType = NotificationType.INFO,
             Message = $"Task: {task.Title} in project: {task.Project.ProjectTitle} assigned for you",
@@ -275,9 +280,9 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         //    }
         //}
 
-        var task = await _taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.TaskId) ?? throw new ArgumentException("Task not found");
-        var nextTask = await _taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.NextTaskId);
-        var prevTask = await _taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.PrevTaskId);
+        var task = await taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.TaskId) ?? throw new ArgumentException("Task not found");
+        var nextTask = await taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.NextTaskId);
+        var prevTask = await taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.PrevTaskId);
 
         decimal newOrder;
 
@@ -304,9 +309,9 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
 
         task.Order = newOrder;
         task.SectionId = reorderRequest.SectionId;
-        _taskRepository.UpdateTaskOrder(task);
+        taskRepository.UpdateTaskOrder(task);
 
-        await _taskRepository.SaveChangesAsync();
+        await taskRepository.SaveChangesAsync();
         return true;
     }
 }

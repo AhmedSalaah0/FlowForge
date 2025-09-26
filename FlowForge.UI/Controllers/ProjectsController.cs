@@ -74,7 +74,7 @@ namespace FlowForge.UI.Controllers
             {
                 return BadRequest();
             }    
-            var project = await _projectService.GetProjectById(user.Id ,projectId);
+            var project = await _projectService.GetProjectById(user.Id, projectId);
             if (project == null)
             {
                 ModelState.AddModelError("ProjectId", "Project not found");
@@ -130,6 +130,43 @@ namespace FlowForge.UI.Controllers
                 return View("Index", await _projectService.GetProjects(user.Id));
             }
             return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> JoinProject(Guid projectId)
+        {
+            var user = await _userManager.FindByEmailAsync(User.Identity.Name);
+            if (user is null)
+            {
+                return BadRequest();
+            }
+            var result = _projectService.AddProjectMember(new ProjectMemberAddRequest
+            {
+                ProjectId = projectId,
+                MemberId = user.Id,
+                MemberRole = Core.Enums.ProjectRole.Member
+            });
+            if (!result.Result)
+            {
+                ModelState.AddModelError("ProjectId", "Failed to join project");
+                return View("Index", await _projectService.GetProjects(user.Id));
+            }
+            return RedirectToAction("Index");
+        }
+        [HttpPost]
+        [Route("change-visibility")]
+        public async Task<IActionResult> ChangeVisibility(ChangeVisibilityRequest ChangeVisibilityRequest)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+            
+            await _projectService.ChangeVisibility(ChangeVisibilityRequest);
+            return RedirectToAction("Tasks", "Tasks", new
+            {
+                projectId = ChangeVisibilityRequest.ProjectId
+            });
         }
     }
 }

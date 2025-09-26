@@ -34,14 +34,21 @@ namespace FlowForge.UI.Controllers
                 }
 
                 ViewBag.projectId = projectId;
-                var members = (await projectService.GetProjectMembers(projectId)).Where(member => member.MembershipStatus == MembershipStatus.ACCEPTED);
+                var project = await projectService.GetProjectById(user.Id, projectId);
+                var members = project.ProjectMembers
+                    .Where(pm => pm.MembershipStatus == MembershipStatus.ACCEPTED)
+                    .ToList();
+                ViewBag.visibility = project.ProjectVisibility;
                 ViewBag.members = members;
                 return View(tasks);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error fetching tasks for project {ProjectId} for user {UserId}", projectId, user.Id);
-                return BadRequest("Error fetching tasks");
+                if (ex.Message == "Join_Allowed")
+                {
+                    return View("~/Views/Projects/JoinProject.cshtml", projectId);
+                }
+                return Forbid();
             }   
         }
 
@@ -151,19 +158,13 @@ namespace FlowForge.UI.Controllers
         [Route("delete")]
         public async Task<IActionResult> DeleteTask(Guid projectId, Guid taskId)
         {
-            var task = await taskService.GetTaskById(projectId, taskId);
-            if (task == null)
-            {
-                return BadRequest();
-            }
             var user = await userManager.FindByEmailAsync(User.Identity.Name);
             if (user == null)
             {
                 return Unauthorized("User not found");
             }
 
-            task.CreatedById = user.Id;
-            bool DeleteSuccess = await taskService.DeleteTask(task);
+            bool DeleteSuccess = await taskService.DeleteTask(user.Id, projectId, taskId);
             if (!DeleteSuccess)
             {
                 ModelState.AddModelError("Delete Task", "Task not found or could not be deleted");

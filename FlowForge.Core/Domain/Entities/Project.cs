@@ -1,4 +1,5 @@
 ﻿using FlowForge.Core.Domain.IdentityEntities;
+using FlowForge.Core.Enums;
 
 namespace FlowForge.Core.Domain.Entities
 {
@@ -10,6 +11,7 @@ namespace FlowForge.Core.Domain.Entities
         public string? ProjectTitle { get; set; }
         public string SelectedColor { get; set; }
         public DateTime CreatedAt { get; set; }
+        public ProjectVisibility ProjectVisibility { get; set; }
         public ICollection<ProjectMember> ProjectMembers { get; set; } = [];
         public ICollection<ProjectSection> Sections { get; set; } = [];
 

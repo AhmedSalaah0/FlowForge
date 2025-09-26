@@ -1,0 +1,33 @@
+﻿@model Guid
+@{
+    ViewData["Title"] = "Join Project";
+}
+
+<div class="container py-5 d-flex justify-content-center fade-in">
+    <div class="card bg-dark text-light shadow-lg border border-secondary" style="max-width: 500px; width: 100%;">
+        <div class="card-body text-center">
+            <h3 class="card-title mb-4 text-warning">
+                <i class="fas fa-users me-2"></i> Join Project
+            </h3>
+
+            <p class="mb-4 text-secondary">
+                This project is <span class="fw-bold text-success">public</span>, but you are not a member yet.
+                <br />
+                Click below to join and start collaborating!
+            </p>
+
+            <form asp-action="JoinProject" asp-controller="Projects" method="post">
+                <input type="hidden" name="projectId" value="@Model" />
+                <button type="submit" class="btn btn-outline-success w-100">
+                    <i class="fas fa-user-plus me-2"></i> Join Project
+                </button>
+            </form>
+
+            <div class="mt-3">
+                <a asp-action="Index" asp-controller="Projects" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-arrow-left me-2"></i> Back to Projects
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

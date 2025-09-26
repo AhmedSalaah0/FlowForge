@@ -15,11 +15,11 @@ public class ProjectRepository(ApplicationDbContext context) : IProjectRepositor
         return project;
     }
 
-    public async Task<Project?> GetProjectById(Guid? userId, Guid? id)
+    public async Task<Project?> GetProjectById(Guid? projectId)
     {
         Project? project = await context.Projects
             .Include(g => g.ProjectMembers)
-            .FirstOrDefaultAsync(g => g.ProjectId == id && (g.CreatedById == userId || g.ProjectMembers.Any(u => u.MemberId == userId)));
+            .FirstOrDefaultAsync(g => g.ProjectId == projectId);
         return project;
     }
 
@@ -44,16 +44,9 @@ public class ProjectRepository(ApplicationDbContext context) : IProjectRepositor
         return project;
     }
 
-    public async Task<bool> DeleteProject(Guid userId, Guid ProjectId)
+    public async Task<bool> DeleteProject(Project project)
     {
-        var project = await context.Projects
-            .Include(g => g.ProjectMembers)
-            .FirstOrDefaultAsync(g => g.ProjectId == ProjectId &&
-            (g.CreatedById == userId)) ?? throw new ArgumentException("Project Not Found");
-
         context.Projects.Remove(project);
-        context.Notifications.RemoveRange(context.Notifications.Where(n => n.ProjectId == ProjectId));
-       
         await context.SaveChangesAsync();
         return true;
     }
@@ -87,7 +80,7 @@ public class ProjectRepository(ApplicationDbContext context) : IProjectRepositor
     public async Task<bool> AddProjectMember(ProjectMember projectMember)
     {
         ArgumentNullException.ThrowIfNull(projectMember);
-        context.ProjectMembers.Add(projectMember);
+        (await context.Projects.FirstOrDefaultAsync(p => p.ProjectId == projectMember.ProjectId))?.ProjectMembers.Add(projectMember);
         await context.SaveChangesAsync();
         return true;
     }
@@ -106,5 +99,12 @@ public class ProjectRepository(ApplicationDbContext context) : IProjectRepositor
             .Where(n => n.ReceiverId == userId)
             .OrderByDescending(n => n.CreatedAt)
             .ToListAsync();
+    }
+
+    public async Task<Project> ChangeVisibility(Project project, ProjectVisibility visibility)
+    {
+        context.Entry(project).Property(p => p.ProjectVisibility).CurrentValue = visibility;
+        await context.SaveChangesAsync();
+        return project;
     }
 }

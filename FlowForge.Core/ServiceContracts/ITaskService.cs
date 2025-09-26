@@ -10,7 +10,7 @@ namespace FlowForge.Core.ServiceContracts
         Task<TaskResponse?> GetTaskById(Guid? projectId, Guid? taskId, bool track = true);
         Task<TaskResponse?> UpdateTask(TaskUpdateRequest? task);
         Task<IEnumerable<TaskResponse>?> GetAllCompletedTask(Guid userId);
-        Task<bool> DeleteTask(TaskResponse task);
+        Task<bool> DeleteTask(Guid userId, Guid projectId, Guid taskId);
         Task<bool> UpdateTaskStatus(TaskUpdateStatus taskUpdateStatus);
         Task<bool> ScheduleTask(ScheduleTaskRequest request);
         Task<bool> UnScheduleTask(Guid taskId, Guid projectId, Guid userId);

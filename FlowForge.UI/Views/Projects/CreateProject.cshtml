@@ -12,7 +12,6 @@
             </h2>
 
             <form asp-controller="Projects" asp-action="CreateProject">
-                @Html.AntiForgeryToken()
                 <div class="mb-3">
                     <label asp-for="ProjectTitle" class="form-label">Project Title</label>
                     <input asp-for="ProjectTitle" class="form-control bg-dark text-light border-secondary" placeholder="Enter project title" />
@@ -34,6 +33,25 @@
                             </label>
                         }
                     </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ProjectVisibility" class="form-label">Visibility</label>
+                    <div class="d-flex gap-3">
+                        <div class="form-check">
+                            <input asp-for="ProjectVisibility" class="form-check-input" type="radio" value="Private" id="privateOption" checked />
+                            <label class="form-check-label" for="privateOption">
+                                <i class="fas fa-lock text-danger me-1"></i> Private
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input asp-for="ProjectVisibility" class="form-check-input" type="radio" value="Public" id="publicOption" />
+                            <label class="form-check-label" for="publicOption">
+                                <i class="fas fa-globe text-success me-1"></i> Public
+                            </label>
+                        </div>
+                    </div>
+                    <span asp-validation-for="ProjectVisibility" class="text-danger small"></span>
                 </div>
 
                 <button type="submit" class="btn btn-outline-light w-100">

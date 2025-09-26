@@ -96,7 +96,7 @@ namespace FlowForge.Infrastructure.DatabaseContext
                 .HasOne(n => n.Project)
                 .WithMany()
                 .HasForeignKey(n => n.ProjectId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
