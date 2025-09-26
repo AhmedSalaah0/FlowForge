@@ -67,17 +67,24 @@ Includes controllers, middleware, views, and client-side assets.
 ## Live Demo
 Access the live version of FlowForge at [https://flowforge.runasp.net]
 
-## Unit Tests
-The project includes unit tests for core services using the following frameworks:
-- **xUnit**: Testing framework
-- **Moq**: Mocking framework for isolating components
-- **FluentAssertions**: For more readable assertions
-- **AutoFixture**: For test data generation
+## Unit Tests  
+The project includes unit tests for core services using the following frameworks:  
 
-Tests cover key service functionality including:
-- Project service operations
-- Project member management
-- Task and section operations
+- **xUnit**: Testing framework  
+- **Moq**: Mocking framework for isolating components  
+- **FluentAssertions**: For more readable assertions  
+- **AutoFixture**: For test data generation  
+
+Tests cover key service functionality including:  
+- Project service operations  
+- Project member management  
+- Task and section operations  
+
+### Status  
+🧪 Unit Testing: 🚧 In Progress  
+![Unit Testing](https://img.shields.io/badge/Unit%20Testing-In%20Progress-yellow?style=flat-square)  
+
+
 
 ## License
 This project is licensed under the MIT License.
