@@ -287,7 +287,11 @@ namespace FlowForge.UI.Controllers
             }
             var token = await _userManager.GenerateChangeEmailTokenAsync(user, changeEmailDTO.NewEmail);
             var encodedToken = WebUtility.UrlEncode(token);
-            var confirmationLink = Url.Action("ConfirmEmailChange", "Account", new { userId = user.Id, email = changeEmailDTO.NewEmail, token = encodedToken }, Request.Scheme);
+
+            var confirmationLink = Url.Action("ConfirmEmailChange", "Account",
+                new { userId = user.Id, email = changeEmailDTO.NewEmail, token = encodedToken },
+                Request.Scheme);
+
             try
             {
                 await sender.SendEmailAsync(changeEmailDTO.NewEmail, "Confirm your email change", $"Please confirm your email change by clicking here: <a href=\"{confirmationLink}\">link</a>");
@@ -313,17 +317,13 @@ namespace FlowForge.UI.Controllers
             {
                 return Unauthorized();
             }
+
             var decodedToken = WebUtility.UrlDecode(token);
 
-            var isValid = await _userManager.VerifyUserTokenAsync(user, _userManager.Options.Tokens.ChangeEmailTokenProvider, "ChangeEmail", decodedToken);
-            if (!isValid)
-            {
-                throw new KeyNotFoundException("Invalid token");
-            }
+            var result = await _userManager.ChangeEmailAsync(user, email, decodedToken);
+            var setUserName = await _userManager.SetUserNameAsync(user, email);
 
-            var ChangeEmail = await _userManager.ChangeEmailAsync(user, email, decodedToken);
-            var SetUserName = await _userManager.SetUserNameAsync(user, email);
-            if (ChangeEmail.Succeeded && SetUserName.Succeeded)
+            if (result.Succeeded && setUserName.Succeeded)
             {
                 await _signInManager.RefreshSignInAsync(user);
                 ViewBag.Message = "Your email has been changed.";
@@ -331,11 +331,11 @@ namespace FlowForge.UI.Controllers
             }
             else
             {
-                foreach (var error in ChangeEmail.Errors)
+                foreach (var error in setUserName.Errors)
                 {
                     ModelState.AddModelError("", error.Description);
                 }
-                foreach (var error in SetUserName.Errors)
+                foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError("", error.Description);
                 }

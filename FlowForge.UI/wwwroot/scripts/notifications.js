@@ -73,7 +73,7 @@
         .withUrl("/notification-hub", {
             skipNegotiation: false,
             transport: signalR.HttpTransportType.WebSockets
-        }) // cookies carry auth
+        })
         .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
         .configureLogging(signalR.LogLevel.Information)
         .build();
@@ -102,6 +102,12 @@
 
             badge.textContent = count.toString();
             badge.classList.remove("d-none");
+
+            const noNotif = document.getElementById("no-notification");
+            if (noNotif) {
+                noNotif.classList.add("d-none");
+            }
+
         }
 
         const menu = document.getElementById("notificationMenu");
