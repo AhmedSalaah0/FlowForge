@@ -14,7 +14,7 @@
             <div class="dropdown" data-bs-display="static">
                 <button class="btn btn-outline-info btn-sm @(ViewBag.visibility == ProjectVisibility.Public ? "text-success" : "text-danger")" type="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
-                    @ViewBag.visibility
+                    @TempData["Visibility"]
                 </button>
 
                 <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="taskMenuButton">

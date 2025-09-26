@@ -17,5 +17,6 @@ namespace FlowForge.Core.ServiceContracts
         Task<bool> MarkAllNotificationsAsRead(Guid userId);
         Task<bool> DeleteNotification(Guid notificationId);
         Task<bool> DeleteAllNotifications(Guid userId);
+        Task<bool> DeleteAllUserProjectNotifications(Guid userId, Guid projectId);
     }
 }

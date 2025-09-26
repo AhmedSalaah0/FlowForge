@@ -120,5 +120,19 @@ namespace FlowForge.Core.Services
             
             return await _notificationRepository.DeleteAllNotifications(notifications);
         }
+
+        public async Task<bool> DeleteAllUserProjectNotifications(Guid userId, Guid projectId)
+        {
+            if (userId == Guid.Empty)
+            {
+                throw new ArgumentException("User ID cannot be empty.", nameof(userId));
+            }
+            if (projectId == Guid.Empty)
+            {
+                throw new ArgumentException("Project ID cannot be empty.", nameof(projectId));
+            }
+
+            return await notificationRepository.DeleteAllUserProjectNotifications(userId, projectId);
+        }
     }
 }

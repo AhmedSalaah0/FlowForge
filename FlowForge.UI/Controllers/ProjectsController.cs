@@ -1,3 +1,4 @@
+using FlowForge.Core.Domain.Entities;
 using FlowForge.Core.Domain.IdentityEntities;
 using FlowForge.Core.DTO;
 using FlowForge.Core.ServiceContracts;
@@ -106,7 +107,7 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpPost]
-        [Route("projects/delete/{projectId}")]
+        [Route("delete/{projectId}")]
         public async Task<IActionResult> DeleteProject(Guid projectId)
         {
             var user = await userManager.FindByEmailAsync(User.Identity.Name);
@@ -153,22 +154,25 @@ namespace FlowForge.UI.Controllers
         [Route("change-visibility")]
         public async Task<IActionResult> ChangeVisibility(ChangeVisibilityRequest ChangeVisibilityRequest)
         {
-            if (!ModelState.IsValid)
-            {
-                ViewBag.Errors = ModelState.Values.SelectMany(e => e.Errors)
-                    .Select(m => m.ErrorMessage);
-                return View("~/Views/Tasks/Tasks.cshtml");
-            }
             var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 return Unauthorized("User not found");
             }
 
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Errors = ModelState.Values.SelectMany(e => e.Errors)
+                    .Select(m => m.ErrorMessage);
+                ViewBag.ProjectId = ChangeVisibilityRequest.ProjectId;
+                return View("~/Views/Tasks/Tasks.cshtml", await taskService.GetAllProjectTasks(user.Id, ChangeVisibilityRequest.ProjectId));
+            }
+
             try
             {
                 ChangeVisibilityRequest.UserId = user.Id;
                 await projectService.ChangeVisibility(ChangeVisibilityRequest);
+                TempData["Visibility"] = ChangeVisibilityRequest.ProjectVisibility;
                 return RedirectToAction("Tasks", "Tasks", new
                 {
                     projectId = ChangeVisibilityRequest.ProjectId
@@ -186,6 +190,10 @@ namespace FlowForge.UI.Controllers
             {
                 ModelState.AddModelError(string.Empty, "An unexpected error occurred while changing project visibility.");
             }
+            var project = await projectService.GetProjectById(user.Id, ChangeVisibilityRequest.ProjectId);
+            TempData["Visibility"] = project.ProjectVisibility;
+            ViewBag.ProjectId = ChangeVisibilityRequest.ProjectId;
+
             return View("~/Views/Tasks/Tasks.cshtml", await taskService.GetAllProjectTasks(user.Id, ChangeVisibilityRequest.ProjectId));
         }
     }

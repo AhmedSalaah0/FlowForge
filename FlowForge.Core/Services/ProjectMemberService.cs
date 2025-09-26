@@ -78,8 +78,7 @@ namespace FlowForge.Core.Services
             await projectMemberRepository.RemoveProjectMember(memberToRemove);
             try
             {
-                var notification = (await notificationService.GetNotifications(memberId))?.FirstOrDefault(t => t.ProjectId == projectId && t.ReceiverId == memberId)?.NotificationId;
-                await notificationService.DeleteNotification(notification ?? Guid.Empty);
+                await notificationService.DeleteAllUserProjectNotifications(memberId, projectId);
             }
             catch (Exception ex)
             {
