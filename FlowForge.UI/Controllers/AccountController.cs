@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -17,7 +18,7 @@ namespace FlowForge.UI.Controllers
     {
 
         [HttpGet]
-        [Authorize("NotAuthenticated")]
+        [AllowAnonymous]
         public IActionResult Login()
         {
             if (_signInManager.IsSignedIn(User))
@@ -58,7 +59,7 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpGet]
-        [Authorize("NotAuthenticated")]
+        [AllowAnonymous]
         public IActionResult Register()
         {
             if (_signInManager.IsSignedIn(User))
@@ -115,14 +116,14 @@ namespace FlowForge.UI.Controllers
             return RedirectToAction("Login", "Account");
         }
 
-        [HttpGet("[action]")]
+        [HttpGet]
+        [Authorize("NotAuthenticated")]
         public IActionResult ForgotPassword()
         {
             return View();
         }
 
         [HttpPost]
-        [Route("[action]")]
         [Authorize("NotAuthenticated")]
         public async Task<IActionResult> ForgotPassword(string email)
         {
@@ -149,7 +150,7 @@ namespace FlowForge.UI.Controllers
         }
 
         [HttpGet]
-        [HttpGet]
+        [Authorize("NotAuthenticated")]
         public async Task<IActionResult> ResetPassword(string token, string email)
         {
             if (token == null || email == null)
@@ -200,8 +201,134 @@ namespace FlowForge.UI.Controllers
             {
                 return Unauthorized();
             }
-            
+
             return PartialView("_ProfilePartialView", user);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Profile()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+            return View(user);
+        }
+
+        [HttpGet]
+        public IActionResult ChangePassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ChangePassword(ChangePasswordDTO changePasswordDTO)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(changePasswordDTO);
+            }
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+            var result = await _userManager.ChangePasswordAsync(user, changePasswordDTO.CurrentPassword, changePasswordDTO.NewPassword);
+            if (result.Succeeded)
+            {
+                await _signInManager.RefreshSignInAsync(user);
+                ViewBag.Message = "Your password has been changed.";
+                return View();
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError("", error.Description);
+                }
+                return View(changePasswordDTO);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ChangeEmail()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null)
+            {
+                return Unauthorized();
+            }
+
+            return View(new ChangeEmailDTO
+            {
+                CurrentEmail = user.Email,
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ChangeEmail(ChangeEmailDTO changeEmailDTO)
+        {
+            if (string.IsNullOrEmpty(changeEmailDTO.NewEmail) || !new EmailAddressAttribute().IsValid(changeEmailDTO.NewEmail))
+            {
+                ModelState.AddModelError("Email", "Invalid email address");
+                return View();
+            }
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+            var existingUser = await _userManager.FindByEmailAsync(changeEmailDTO.NewEmail);
+            if (existingUser != null)
+            {
+                ModelState.AddModelError("Email", "Email is already in use");
+                return View();
+            }
+            var token = await _userManager.GenerateChangeEmailTokenAsync(user, changeEmailDTO.NewEmail);
+            var encodedToken = WebUtility.UrlEncode(token);
+            var confirmationLink = Url.Action("ConfirmEmailChange", "Account", new { userId = user.Id, email = changeEmailDTO.NewEmail, token = encodedToken }, Request.Scheme);
+            try
+            {
+                await sender.SendEmailAsync(changeEmailDTO.NewEmail, "Confirm your email change", $"Please confirm your email change by clicking here: <a href=\"{confirmationLink}\">link</a>");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("Email Sending Failed", ex.Message);
+                return View();
+            }
+            ViewBag.Message = "A confirmation link has been sent to your new email address. Please check your email to confirm the change.";
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ConfirmEmailChange(string userId, string email, string token)
+        {
+            if (userId == null || email == null || token == null)
+            {
+                return BadRequest("Invalid user or token is expired");
+            }
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+            var decodedToken = WebUtility.UrlDecode(token);
+            var result = await _userManager.ChangeEmailAsync(user, email, decodedToken);
+            if (result.Succeeded)
+            {
+                await _signInManager.RefreshSignInAsync(user);
+                ViewBag.Message = "Your email has been changed.";
+                return View();
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError("", error.Description);
+                }
+                return View();
+            }
         }
     }
 }

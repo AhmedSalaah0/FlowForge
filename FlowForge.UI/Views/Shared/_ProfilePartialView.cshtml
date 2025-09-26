@@ -8,8 +8,14 @@
 <li><hr class="dropdown-divider border-secondary"></li>
 
 <li>
+    <form asp-controller="Account" asp-action="Profile" method="get" class="m-0">
+        <button type="submit" class="dropdown-item text-info d-flex align-items-center">
+			<i class="fas fa-user-cog me-2"></i> Profile
+        </button>
+    </form>
+</li>
+<li>
     <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
-        @Html.AntiForgeryToken()
         <button type="submit" class="dropdown-item text-danger d-flex align-items-center">
             <i class="fas fa-sign-out-alt me-2"></i> Logout
         </button>

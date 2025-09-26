@@ -72,7 +72,20 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
+    options.ExpireTimeSpan = TimeSpan.FromDays(14);
+    options.SlidingExpiration = true;
     options.LoginPath = "/Account/Login";
+
+    options.Events.OnSigningIn = context =>
+    {
+        var authProp = context.Properties;
+
+        if (authProp.IsPersistent == false)
+        {
+            authProp.ExpiresUtc = null;
+        }
+        return Task.CompletedTask;
+    };
 });
 
 builder.Services.Configure<EmailSettings>(

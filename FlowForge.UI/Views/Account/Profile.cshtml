@@ -1,0 +1,36 @@
+﻿@model ApplicationUser
+@{
+    ViewBag.Title = "Profile";
+}
+
+<div class="container mt-4">
+
+    <div class="border-bottom border-secondary pb-2 mb-4">
+        <h1 class="h4 text-light m-0">
+            <i class="fa-solid fa-user"></i> Profile
+        </h1>
+    </div>
+
+    <div class="card bg-dark text-light border border-secondary shadow-sm rounded-3">
+        <div class="card-body p-4">
+            <h3 class="mb-2">@Model.PersonName</h3>
+            <p class="text-secondary mb-0"><strong>Email:</strong> @Model.Email</p>
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex flex-wrap gap-2">
+        <a asp-controller="Account" asp-action="ChangeEmail" class="btn btn-outline-info">
+            <i class="fa-solid fa-pen"></i> Change Email
+        </a>
+
+        <a asp-controller="Account" asp-action="ChangePassword" class="btn btn-outline-warning">
+            <i class="fa-solid fa-lock"></i> Change Password
+        </a>
+
+        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </button>
+        </form>
+    </div>
+</div>

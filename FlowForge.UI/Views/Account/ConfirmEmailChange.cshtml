@@ -1,0 +1,16 @@
+﻿@{
+    ViewData["Title"] = "Confirm Email Change";
+}
+
+<div class="container py-5 text-center">
+    <h2 class="mb-4">@ViewData["Title"]</h2>
+
+    <div class="alert alert-info">
+        @ViewBag.Message
+    </div>
+
+    <a asp-controller="Projects" asp-action="Index" class="btn btn-primary mt-3">
+        Go Home
+    </a>
+</div>
+
