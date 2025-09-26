@@ -80,7 +80,6 @@ namespace FlowForge.Core.Services
 
             if (project.CreatedById == userId)
             {
-                
                 bool result = await projectRepository.DeleteProject(project);
                 return result;
             }

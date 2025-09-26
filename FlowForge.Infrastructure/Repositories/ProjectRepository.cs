@@ -46,7 +46,31 @@ public class ProjectRepository(ApplicationDbContext context) : IProjectRepositor
 
     public async Task<bool> DeleteProject(Project project)
     {
+        await context.Entry(project)
+               .Collection(p => p.ProjectMembers).LoadAsync();
+
+        await context.Entry(project)
+            .Collection(p => p.Sections)
+            .Query()
+            .Include(s => s.Tasks)
+            .LoadAsync();
+
+        foreach (var section in project.Sections)
+        {
+            context.Tasks.RemoveRange(section.Tasks);
+        }
+
+        var projectTasks = await context.Tasks
+            .Where(t => t.ProjectId == project.ProjectId && t.SectionId == null)
+            .ToListAsync();
+        context.Tasks.RemoveRange(projectTasks);
+
+        context.ProjectMembers.RemoveRange(project.ProjectMembers);
+
+        context.Sections.RemoveRange(project.Sections);
+
         context.Projects.Remove(project);
+
         await context.SaveChangesAsync();
         return true;
     }

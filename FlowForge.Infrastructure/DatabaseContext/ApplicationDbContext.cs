@@ -63,7 +63,7 @@ namespace FlowForge.Infrastructure.DatabaseContext
                 .HasOne(t => t.Assignee)
                 .WithMany()
                 .HasForeignKey(t => new { t.AssigneeId, t.ProjectId })
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
             
             modelBuilder.Entity<ProjectMember>()
                 .HasKey(pm => new { pm.MemberId, pm.ProjectId });

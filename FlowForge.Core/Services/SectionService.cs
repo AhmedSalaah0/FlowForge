@@ -40,7 +40,7 @@ namespace FlowForge.Core.Services
             }
             var project = await projectService.GetProjectById(userId, section.ProjectId);
 
-            if (section.CreatedById != userId || project.ProjectMembers.FirstOrDefault(u => u.MemberId == userId).MemberRole == Enums.ProjectRole.Member)
+            if (section.CreatedById != userId && project.ProjectMembers.FirstOrDefault(u => u.MemberId == userId).MemberRole == Enums.ProjectRole.Member)
             {
                 throw new UnauthorizedAccessException("You are not authorized to delete this section.");
             }
