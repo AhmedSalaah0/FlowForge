@@ -172,7 +172,8 @@ namespace FlowForge.UI.Controllers
             {
                 ChangeVisibilityRequest.UserId = user.Id;
                 await projectService.ChangeVisibility(ChangeVisibilityRequest);
-                TempData["Visibility"] = ChangeVisibilityRequest.ProjectVisibility;
+                ViewBag.Visibility = ChangeVisibilityRequest.ProjectVisibility;
+
                 return RedirectToAction("Tasks", "Tasks", new
                 {
                     projectId = ChangeVisibilityRequest.ProjectId
@@ -191,7 +192,8 @@ namespace FlowForge.UI.Controllers
                 ModelState.AddModelError(string.Empty, "An unexpected error occurred while changing project visibility.");
             }
             var project = await projectService.GetProjectById(user.Id, ChangeVisibilityRequest.ProjectId);
-            TempData["Visibility"] = project.ProjectVisibility;
+
+            ViewBag.Visibility = project.ProjectVisibility;
             ViewBag.ProjectId = ChangeVisibilityRequest.ProjectId;
 
             return View("~/Views/Tasks/Tasks.cshtml", await taskService.GetAllProjectTasks(user.Id, ChangeVisibilityRequest.ProjectId));

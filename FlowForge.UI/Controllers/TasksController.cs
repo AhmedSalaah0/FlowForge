@@ -38,7 +38,7 @@ namespace FlowForge.UI.Controllers
                 var members = project.ProjectMembers
                     .Where(pm => pm.MembershipStatus == MembershipStatus.ACCEPTED)
                     .ToList();
-                TempData["Visibility"] = project.ProjectVisibility;
+                ViewBag.Visibility = project.ProjectVisibility;
                 ViewBag.members = members;
                 return View(tasks);
             }
