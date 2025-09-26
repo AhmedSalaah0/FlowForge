@@ -24,6 +24,14 @@ public class ReorderTaskService : IReorderTaskService
         var task = await _taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.TaskId)
                    ?? throw new KeyNotFoundException("Task not found");
 
+        var oldSectionId = task.SectionId;
+        bool sectionChanged = task.SectionId != reorderRequest.SectionId;
+
+        if (sectionChanged)
+        {
+            task.SectionId = reorderRequest.SectionId;
+        }
+
         var prev = reorderRequest.PrevTaskId == Guid.Empty ? null :
                    await _taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.PrevTaskId, false);
 
@@ -36,7 +44,7 @@ public class ReorderTaskService : IReorderTaskService
         {
             if ((next.Order ?? 0) - (prev.Order ?? 0) < MinGap)
             {
-                await ReBalanceSectionTasks(reorderRequest.SectionId);
+                await ReBalanceSectionTasks(reorderRequest.ProjectId, reorderRequest.SectionId);
                 prev = await _taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.PrevTaskId, false);
                 next = await _taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.NextTaskId, false);
             }
@@ -52,22 +60,31 @@ public class ReorderTaskService : IReorderTaskService
         }
         else
         {
+            // empty section
             newOrder = Step;
         }
 
         task.Order = newOrder;
         await _taskRepository.SaveChangesAsync();
+
+        if (sectionChanged)
+        {
+            await ReBalanceSectionTasks(reorderRequest.ProjectId, oldSectionId); 
+        }
+
         await transaction.CommitAsync();
 
         return true;
     }
 
-    public async Task ReBalanceSectionTasks(Guid sectionId)
+    public async Task ReBalanceSectionTasks(Guid projectId, Guid? sectionId)
     {
-        var tasks = (await _taskRepository.GetTasks(Guid.Empty, sectionId))
-            .SelectMany(s => s.Tasks)
-            .OrderBy(t => t.Order)
-            .ToList();
+        var sections = await _taskRepository.GetTasks(Guid.Empty, projectId);
+
+        var tasks = sectionId == null ? 
+            sections.SelectMany(s => s.Tasks).Where(t => t.SectionId == null).OrderBy(t => t.Order).ToList()
+            : sections.FirstOrDefault(s => s.SectionId == sectionId)?.Tasks.OrderBy(t => t.Order).ToList();
+
 
         decimal order = Step;
         foreach (var task in tasks)

@@ -119,7 +119,13 @@ namespace FlowForge.Core.Services
                 throw new ArgumentException("Invalid visibility value", nameof(changeVisibilityRequest.ProjectVisibility));
             }
             var project = await projectRepository.GetProjectById(changeVisibilityRequest.ProjectId) ?? throw new ArgumentException("Project not found", nameof(changeVisibilityRequest.ProjectId));
-            
+
+            var member = project.ProjectMembers.FirstOrDefault(pm => pm.MemberId == changeVisibilityRequest.UserId);
+
+            if (project.CreatedById != changeVisibilityRequest.UserId && (member == null || member.MemberRole == ProjectRole.Member))
+            {
+                throw new UnauthorizedAccessException("Only creator or moderator can change visibility");
+            }
             return await projectRepository.ChangeVisibility(project, newVisibility)
                 .ContinueWith(t => t.Result.ToProjectResponse(Guid.Empty));
         }

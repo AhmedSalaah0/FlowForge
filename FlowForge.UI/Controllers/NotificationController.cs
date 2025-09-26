@@ -2,6 +2,7 @@ using FlowForge.Core.Domain.IdentityEntities;
 using FlowForge.Core.Hubs;
 using FlowForge.Core.ServiceContracts;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.RenderTree;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -72,6 +73,39 @@ namespace FlowForge.UI.Controllers
                 return Json(new { success = false, error = ex.Message });
             }
         }
+
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<IActionResult> DeleteNotification(Guid NotificationId)
+        {
+            if (NotificationId == Guid.Empty)
+            {
+                throw new KeyNotFoundException("Id is empty");
+            }
+            bool result = await notificationService.DeleteNotification(NotificationId);
+            if (!result)
+            {
+                TempData["ErrorMessage"] = "Error deleting notification";
+            }
+            else
+            {
+                TempData["Message"] = "Notification deleted successfully";
+            }
+            var link = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(link))
+            {
+                var uri = new Uri(link);
+                var localPath = uri.PathAndQuery;
+
+                if (Url.IsLocalUrl(localPath))
+                {
+                    return Redirect(localPath);
+                }
+                return Redirect(link);
+            }
+            return RedirectToAction("AllNotifications");
+        }
+
 
         [HttpPost]
         public async Task<IActionResult> ClearNotifications()

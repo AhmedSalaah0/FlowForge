@@ -145,7 +145,7 @@ namespace FlowForge.UI.Controllers
                 ModelState.AddModelError("Email Sending Failed", ex.Message);
                 return View();
             }
-            ViewBag.Message = "Reset password link has been sent to your email.";
+            ViewBag.Message = "Reset password link has been sent to your email(Check spam box).";
             return View();
         }
 
@@ -297,7 +297,7 @@ namespace FlowForge.UI.Controllers
                 ModelState.AddModelError("Email Sending Failed", ex.Message);
                 return View();
             }
-            ViewBag.Message = "A confirmation link has been sent to your new email address. Please check your email to confirm the change.";
+            ViewBag.Message = "A confirmation link has been sent to your new email address. Please check your email to confirm the change (Check spam box).";
             return View();
         }
 
@@ -314,8 +314,16 @@ namespace FlowForge.UI.Controllers
                 return Unauthorized();
             }
             var decodedToken = WebUtility.UrlDecode(token);
-            var result = await _userManager.ChangeEmailAsync(user, email, decodedToken);
-            if (result.Succeeded)
+
+            var isValid = await _userManager.VerifyUserTokenAsync(user, _userManager.Options.Tokens.ChangeEmailTokenProvider, "ChangeEmail", decodedToken);
+            if (!isValid)
+            {
+                throw new KeyNotFoundException("Invalid token");
+            }
+
+            var ChangeEmail = await _userManager.ChangeEmailAsync(user, email, decodedToken);
+            var SetUserName = await _userManager.SetUserNameAsync(user, email);
+            if (ChangeEmail.Succeeded && SetUserName.Succeeded)
             {
                 await _signInManager.RefreshSignInAsync(user);
                 ViewBag.Message = "Your email has been changed.";
@@ -323,7 +331,11 @@ namespace FlowForge.UI.Controllers
             }
             else
             {
-                foreach (var error in result.Errors)
+                foreach (var error in ChangeEmail.Errors)
+                {
+                    ModelState.AddModelError("", error.Description);
+                }
+                foreach (var error in SetUserName.Errors)
                 {
                     ModelState.AddModelError("", error.Description);
                 }

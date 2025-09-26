@@ -12,6 +12,22 @@
         <div class="alert alert-danger">@error.ErrorMessage</div>
     }
 }
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade-in" role="alert">
+        @TempData["Message"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade-in" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 <div class="container py-4">
     <div class="mb-4 border-bottom border-secondary pb-3">
         <h1 class="h3 text-light d-flex align-items-center gap-2">

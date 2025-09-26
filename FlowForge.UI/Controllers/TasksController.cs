@@ -19,7 +19,7 @@ namespace FlowForge.UI.Controllers
         [HttpGet]
         public async Task<IActionResult> Tasks(Guid projectId)
         {
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 return BadRequest("User not found");
@@ -69,7 +69,7 @@ namespace FlowForge.UI.Controllers
             {
                 return BadRequest();
             }
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 ModelState.AddModelError("Add Task", "User Not Found");
@@ -111,7 +111,7 @@ namespace FlowForge.UI.Controllers
                 ViewBag.Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
                 return View(request);
             }
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 ModelState.AddModelError("", "User not found");
@@ -136,7 +136,7 @@ namespace FlowForge.UI.Controllers
         [Route("UnScheduleTask")]
         public async Task<IActionResult> UnScheduleTask(Guid taskId, Guid projectId)
         {
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 return Unauthorized("User not found");
@@ -158,7 +158,7 @@ namespace FlowForge.UI.Controllers
         [Route("delete")]
         public async Task<IActionResult> DeleteTask(Guid projectId, Guid taskId)
         {
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 return Unauthorized("User not found");
@@ -168,7 +168,7 @@ namespace FlowForge.UI.Controllers
             if (!DeleteSuccess)
             {
                 ModelState.AddModelError("Delete Task", "Task not found or could not be deleted");
-                return View("SubTasks", await taskService.GetAllProjectTasks(user.Id, projectId));
+                return View("Tasks", await taskService.GetAllProjectTasks(user.Id, projectId));
             }
 
             return RedirectToAction("Tasks", new
@@ -181,7 +181,7 @@ namespace FlowForge.UI.Controllers
         [Route("EditTask")]
         public async Task<IActionResult> EditTask(Guid projectId, Guid taskId)
         {
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 return NotFound("User not found");
@@ -205,11 +205,7 @@ namespace FlowForge.UI.Controllers
                 return View("Tasks", await taskService.GetAllProjectTasks(user.Id, projectId));
             }
 
-            var task = await taskService.GetTaskById(projectId, taskId);
-            if (task == null)
-            {
-                return BadRequest();
-            }
+            var task = await taskService.GetTaskById(projectId, taskId) ?? throw new KeyNotFoundException();
             return View(task);
         }
 
@@ -221,7 +217,7 @@ namespace FlowForge.UI.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 return BadRequest("User not found");
@@ -238,7 +234,11 @@ namespace FlowForge.UI.Controllers
         [Route("tasks/completed")]
         public async Task<IActionResult> CompletedTasks()
         {
-            ApplicationUser user = await userManager.FindByEmailAsync(User.Identity.Name);
+            ApplicationUser? user = await userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized("User not found");
+            }
             var tasks = await taskService.GetAllCompletedTask(user.Id);
             return View(tasks);
         }
@@ -271,7 +271,7 @@ namespace FlowForge.UI.Controllers
             var task = await taskService.GetTaskById(request.ProjectId, request.TaskId);
             if (task == null) return NotFound();
 
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 return Unauthorized("User not found");
@@ -285,7 +285,7 @@ namespace FlowForge.UI.Controllers
         [Route("Assign")]
         public async Task<IActionResult> AssignTask([FromBody] AssignTaskRequest assignRequest)
         {
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 return Unauthorized("User not found");
@@ -310,7 +310,7 @@ namespace FlowForge.UI.Controllers
         [Route("[action]")]
         public async Task<IActionResult> ReorderTasks([FromBody] ReorderRequest reorderRequest)
         {
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.GetUserAsync(User);
             if (user == null)
             {
                 return Unauthorized("User not found");

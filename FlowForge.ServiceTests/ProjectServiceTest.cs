@@ -22,7 +22,7 @@ namespace FlowForge.ServiceTests
         {
             _projectRepositoryMock = new Mock<IProjectRepository>();
             _projectMemberRepositoryMock = new Mock<IProjectMemberRepository>();
-            _projectService = new ProjectService(_projectRepositoryMock.Object, _projectMemberRepositoryMock.Object);
+            _projectService = new ProjectService(_projectRepositoryMock.Object, /*_projectMemberRepositoryMock.Object*/ null);
             _fixture = new Fixture();
         }
 
@@ -137,7 +137,7 @@ namespace FlowForge.ServiceTests
             _projectRepositoryMock.Setup(p => p.GetProjectMembers(It.IsAny<Guid>()))
                 .ReturnsAsync(projectResponse.ProjectMembers);
 
-            _projectRepositoryMock.Setup(p => p.GetProjectById(It.IsAny<Guid>(), It.IsAny<Guid>()))
+            _projectRepositoryMock.Setup(p => p.GetProjectById(It.IsAny<Guid>()))
                 .ReturnsAsync(project);
 
             var response = await _projectService.GetProjectById(userId, projectResponse.ProjectId);

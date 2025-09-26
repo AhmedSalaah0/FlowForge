@@ -121,6 +121,10 @@ namespace FlowForge.UI.Controllers
             try
             {
                 await _projectMemberService.RemoveProjectMember(projectId, memberId, user.Id);
+                if (user.Id == memberId)
+                {
+                    return RedirectToAction("Index", "Projects");
+                }
                 return RedirectToAction("Tasks", "Tasks", new { projectId });
             }
             catch (Exception ex)

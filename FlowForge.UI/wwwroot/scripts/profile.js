@@ -38,7 +38,7 @@
         .catch(error => {
             console.error('Failed to load user data:', error);
             if (notificationMenu) {
-                notificationMenu.innerHTML = '<div class="text-center text-muted py-2">Failed to load user data</div>';
+                notificationMenu.innerHTML = '<div class="text-center text-secondary py-2">Failed to load user data</div>';
             }
         });
 })

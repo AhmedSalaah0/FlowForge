@@ -65,7 +65,7 @@
         .catch(error => {
             console.error('Failed to load notifications:', error);
             if (notificationMenu) {
-                notificationMenu.innerHTML = '<div class="text-center text-muted py-2">Failed to load notifications</div>';
+                notificationMenu.innerHTML = '<div class="text-center text-secondary py-2">Failed to load notifications</div>';
             }
         });
 

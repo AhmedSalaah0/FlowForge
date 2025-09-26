@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.IdentityModel.Tokens;
 using System.Security.Authentication;
 
 namespace FlowForge.UI.Middleware

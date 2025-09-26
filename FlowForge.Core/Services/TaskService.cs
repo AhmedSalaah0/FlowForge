@@ -253,65 +253,65 @@ public class TaskService(ITaskRepository taskRepository, IProjectService project
         return UpdatedTask.ToTaskResponse();
     }
 
-    public async Task<bool> ReorderTask(ReorderRequest reorderRequest, Guid userId)
-    {
-        ArgumentNullException.ThrowIfNull(reorderRequest);
-        if (reorderRequest.ProjectId == Guid.Empty || reorderRequest.SectionId == Guid.Empty)
-        {
-            throw new ArgumentException("Invalid project or section ID");
-        }
+    //public async Task<bool> ReorderTask(ReorderRequest reorderRequest, Guid userId)
+    //{
+    //    ArgumentNullException.ThrowIfNull(reorderRequest);
+    //    if (reorderRequest.ProjectId == Guid.Empty || reorderRequest.SectionId == Guid.Empty)
+    //    {
+    //        throw new ArgumentException("Invalid project or section ID");
+    //    }
 
-        //var tasks = (await _taskRepository.GetTasks(userId, reorderRequest.ProjectId))
-        //            .SelectMany(section => section.Tasks)
-        //            .Where(t => t.SectionId == reorderRequest.SectionId);
+    //    //var tasks = (await _taskRepository.GetTasks(userId, reorderRequest.ProjectId))
+    //    //            .SelectMany(section => section.Tasks)
+    //    //            .Where(t => t.SectionId == reorderRequest.SectionId);
 
-        //for (int i = 0; i < reorderRequest.TaskIds.Count; i++)
-        //{
-        //    var TaskId = reorderRequest.TaskIds[i];
-        //    var task = tasks.FirstOrDefault(t => t.TaskId == TaskId);
-        //    if (task is not null)
-        //    {
-        //        task.Order = i;
-        //        _taskRepository.UpdateTaskOrder(task);
-        //    }
-        //    else
-        //    {
-        //        throw new ArgumentException($"Task with ID {TaskId} not found in the specified section.");
-        //    }
-        //}
+    //    //for (int i = 0; i < reorderRequest.TaskIds.Count; i++)
+    //    //{
+    //    //    var TaskId = reorderRequest.TaskIds[i];
+    //    //    var task = tasks.FirstOrDefault(t => t.TaskId == TaskId);
+    //    //    if (task is not null)
+    //    //    {
+    //    //        task.Order = i;
+    //    //        _taskRepository.UpdateTaskOrder(task);
+    //    //    }
+    //    //    else
+    //    //    {
+    //    //        throw new ArgumentException($"Task with ID {TaskId} not found in the specified section.");
+    //    //    }
+    //    //}
 
-        var task = await taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.TaskId) ?? throw new ArgumentException("Task not found");
-        var nextTask = await taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.NextTaskId);
-        var prevTask = await taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.PrevTaskId);
+    //    var task = await taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.TaskId) ?? throw new ArgumentException("Task not found");
+    //    var nextTask = await taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.NextTaskId);
+    //    var prevTask = await taskRepository.GetTaskById(reorderRequest.ProjectId, reorderRequest.PrevTaskId);
 
-        decimal newOrder;
+    //    decimal newOrder;
 
-        if (prevTask != null && nextTask != null)
-        {
-            var left = prevTask.Order.GetValueOrDefault();
-            var right = nextTask.Order.GetValueOrDefault();
-            newOrder = (left + right) / 2m;
-        }
-        else if (prevTask != null)
-        {
-            var left = prevTask.Order.GetValueOrDefault();
-            newOrder = left + 10;
-        }
-        else if (nextTask != null)
-        {
-            var right = nextTask.Order.GetValueOrDefault();
-            newOrder = right - 10;
-        }
-        else
-        {
-            newOrder = 10;
-        }
+    //    if (prevTask != null && nextTask != null)
+    //    {
+    //        var left = prevTask.Order.GetValueOrDefault();
+    //        var right = nextTask.Order.GetValueOrDefault();
+    //        newOrder = (left + right) / 2m;
+    //    }
+    //    else if (prevTask != null)
+    //    {
+    //        var left = prevTask.Order.GetValueOrDefault();
+    //        newOrder = left + 10;
+    //    }
+    //    else if (nextTask != null)
+    //    {
+    //        var right = nextTask.Order.GetValueOrDefault();
+    //        newOrder = right - 10;
+    //    }
+    //    else
+    //    {
+    //        newOrder = 10;
+    //    }
 
-        task.Order = newOrder;
-        task.SectionId = reorderRequest.SectionId;
-        taskRepository.UpdateTaskOrder(task);
+    //    task.Order = newOrder;
+    //    task.SectionId = reorderRequest.SectionId;
+    //    taskRepository.UpdateTaskOrder(task);
 
-        await taskRepository.SaveChangesAsync();
-        return true;
-    }
+    //    await taskRepository.SaveChangesAsync();
+    //    return true;
+    //}
 }
