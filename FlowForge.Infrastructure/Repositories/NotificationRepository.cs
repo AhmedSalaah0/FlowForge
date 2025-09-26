@@ -121,5 +121,21 @@ namespace FlowForge.Infrastructure.Repositories
                 return Task.FromResult(false);
             }
         }
+
+        public Task<bool> DeleteAllUserProjectNotifications(Guid userId, Guid projectId)
+        {
+            var notifications = _context.Notifications
+                .Where(n => n.ReceiverId == userId && n.ProjectId == projectId);
+            _context.Notifications.RemoveRange(notifications);
+            try
+            {
+                return _context.SaveChangesAsync().ContinueWith(t => t.IsCompletedSuccessfully);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting all user project notifications: {Message}", ex.Message);
+                return Task.FromResult(false);
+            }
+        }
     }
 }
